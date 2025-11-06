@@ -59,19 +59,23 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-blue-50">
       <BackgroundWithLogo />
       
       <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-3xl shadow-glow w-full max-w-md p-8 relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-24 h-24 mx-auto mb-4 relative">
-            <div className="absolute inset-0 bg-primary rounded-2xl transform rotate-6"></div>
-            <div className="absolute inset-0 gradient-primary rounded-2xl flex items-center justify-center">
-              <span className="text-5xl font-black text-white">P</span>
-            </div>
-          </div>
-          <h1 className="text-3xl font-black text-gray-800 mb-1">PAVULLA</h1>
+<div className="w-28 h-28 mx-auto mb-4 relative">
+  <div className="absolute inset-0 bg-primary rounded-2xl transform rotate-6"></div>
+  <div className="absolute inset-0 gradient-primary rounded-2xl flex items-center justify-center p-3">
+    <img 
+      src="/pavulla-logo.svg" 
+      alt="PAVULLA Logo" 
+      className="w-full h-full object-contain drop-shadow-lg"
+    />
+  </div>
+</div>
+          {/* <h1 className="text-3xl font-black text-gray-800 mb-1">PAVULLA</h1> */}
           <p className="text-sm text-secondary font-semibold mb-2">Confiável. Digital. Local.</p>
           <p className="text-gray-600">Entre para continuar</p>
         </div>
