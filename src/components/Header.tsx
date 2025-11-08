@@ -2,19 +2,19 @@
 
 import { LogOut, Bell, QrCode } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { useApp } from "@/contexts/AppContext"
+import { useAuth } from "@/contexts/AuthContext"
 import { useState } from "react"
 import NotificationsModal from "./NotificationsModal"
 import QRScannerModal from "./QRScannerModal"
 
 const Header = () => {
   const navigate = useNavigate()
-  const { currentUser, setCurrentUser } = useApp()
+  const { logout, user } = useAuth()
   const [showNotifications, setShowNotifications] = useState(false)
   const [showQRScanner, setShowQRScanner] = useState(false)
 
   const handleLogout = () => {
-    setCurrentUser(null)
+    logout()
     navigate("/login")
   }
 

@@ -1,20 +1,62 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Users, Shield, UserCheck, UserCog, ChevronLeft, Plus } from "lucide-react"
+import { Users, Shield, UserCheck, UserCog, ChevronLeft, Plus, Edit2, Save, X } from "lucide-react"
 import BackgroundWithLogo from "@/components/BackgroundWithLogo"
 import Header from "@/components/Header"
-import { useApp } from "@/contexts/AppContext"
+import { useAuth } from "@/contexts/AuthContext"
+import { fetchUsers, updateUser, ApiUser } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
+
+interface EditUserForm {
+  full_name: string
+  group_name: string
+  is_admin: boolean
+  password: string
+}
 
 const UserManagement = () => {
   const navigate = useNavigate()
-  const { users, updateUserRole, addUser, currentUser } = useApp()
-  const [showAddUser, setShowAddUser] = useState(false)
-  const [newUser, setNewUser] = useState({ name: "", email: "", role: "cliente" as "admin" | "recepcao" | "cliente" })
+  const { isAdmin } = useAuth()
+  const { toast } = useToast()
+  const [users, setUsers] = useState<ApiUser[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editingUserId, setEditingUserId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState<EditUserForm>({
+    full_name: "",
+    group_name: "",
+    is_admin: false,
+    password: "",
+  })
+  const [saving, setSaving] = useState(false)
+
+  // Fetch users on mount
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        setLoading(true)
+        const data = await fetchUsers()
+        setUsers(data)
+      } catch (error) {
+        console.error("Error fetching users:", error)
+        toast({
+          title: "Erro",
+          description: "Falha ao carregar usuários.",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (isAdmin) {
+      loadUsers()
+    }
+  }, [isAdmin, toast])
 
   // Check if current user is admin
-  if (currentUser?.role !== "admin") {
+  if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="bg-white p-8 rounded-2xl shadow-elegant">
@@ -71,13 +113,78 @@ const UserManagement = () => {
   }
 
   const handleAddUser = () => {
-    if (!newUser.name.trim() || !newUser.email.trim()) {
-      alert("Por favor, preencha todos os campos.")
-      return
+    // Navigate to register page
+    navigate("/register")
+  }
+
+  const startEdit = (user: ApiUser) => {
+    setEditingUserId(user.id)
+    setEditForm({
+      full_name: user.full_name,
+      group_name: user.group_name,
+      is_admin: user.is_admin,
+      password: "",
+    })
+  }
+
+  const cancelEdit = () => {
+    setEditingUserId(null)
+    setEditForm({
+      full_name: "",
+      group_name: "",
+      is_admin: false,
+      password: "",
+    })
+  }
+
+  const saveEdit = async (userId: string) => {
+    try {
+      if (!editForm.full_name.trim()) {
+        toast({
+          title: "Erro",
+          description: "Nome é obrigatório.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setSaving(true)
+
+      const updatedUser = await updateUser(
+        userId,
+        editForm.full_name,
+        editForm.group_name,
+        editForm.is_admin,
+        true,
+        editForm.password
+      )
+
+      // Update local state
+      setUsers(users.map(u => (u.id === userId ? updatedUser : u)))
+
+      toast({
+        title: "Sucesso!",
+        description: "Usuário atualizado com sucesso.",
+      })
+
+      cancelEdit()
+    } catch (error: any) {
+      console.error("Error updating user:", error)
+      toast({
+        title: "Erro",
+        description: error.message || "Falha ao atualizar usuário.",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
     }
-    addUser(newUser)
-    setNewUser({ name: "", email: "", role: "cliente" })
-    setShowAddUser(false)
+  }
+
+  // Helper to get current role from user
+  const getUserRole = (user: ApiUser): string => {
+    if (user.is_admin) return "admin"
+    if (user.group_name === "recepcao") return "recepcao"
+    return "cliente"
   }
 
   return (
@@ -95,7 +202,7 @@ const UserManagement = () => {
             <h2 className="text-2xl font-bold text-black">Gestão de Usuários</h2>
           </div>
           <button
-            onClick={() => setShowAddUser(!showAddUser)}
+            onClick={handleAddUser}
             className="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-secondary/90 transition flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
@@ -103,96 +210,151 @@ const UserManagement = () => {
           </button>
         </div>
 
-        {/* Add User Form */}
-        {showAddUser && (
-          <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-6 shadow-elegant mb-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Novo Usuário</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nome</label>
-                <input
-                  type="text"
-                  value={newUser.name}
-                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                  className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-secondary focus:outline-none"
-                  placeholder="Nome completo"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                <input
-                  type="email"
-                  value={newUser.email}
-                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                  className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-secondary focus:outline-none"
-                  placeholder="email@exemplo.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Grupo</label>
-                <select
-                  value={newUser.role}
-                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value as "admin" | "recepcao" | "cliente" })}
-                  className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-secondary focus:outline-none"
-                >
-                  <option value="cliente">Cliente</option>
-                  <option value="recepcao">Recepção</option>
-                  <option value="admin">Administrador</option>
-                </select>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleAddUser}
-                  className="flex-1 bg-secondary text-white py-2 rounded-lg hover:bg-secondary/90 transition"
-                >
-                  Adicionar
-                </button>
-                <button
-                  onClick={() => setShowAddUser(false)}
-                  className="px-6 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Users List */}
-        <div className="space-y-4">
-          {users.map((user) => (
-            <div key={user.id} className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-5 shadow-elegant">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-lg">
-                    {user.name.charAt(0).toUpperCase()}
+        {loading ? (
+          <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-8 text-center shadow-elegant">
+            <p className="text-gray-500">Carregando usuários...</p>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-8 text-center shadow-elegant">
+            <p className="text-gray-500">Nenhum usuário encontrado.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {users.map((user) => {
+              const isEditing = editingUserId === user.id
+              const currentRole = getUserRole(user)
+
+              if (isEditing) {
+                // Edit mode
+                return (
+                  <div key={user.id} className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-5 shadow-elegant">
+                    <div className="space-y-4">
+                      {/* Phone (read-only) */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                        <input
+                          type="text"
+                          value={user.phone}
+                          disabled
+                          className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                        />
+                      </div>
+
+                      {/* Full Name */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                        <input
+                          type="text"
+                          value={editForm.full_name}
+                          onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                          className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-secondary focus:outline-none"
+                          placeholder="Nome completo"
+                        />
+                      </div>
+
+                      {/* Group Name */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Grupo</label>
+                        <input
+                          type="text"
+                          value={editForm.group_name}
+                          onChange={(e) => setEditForm({ ...editForm, group_name: e.target.value })}
+                          className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-secondary focus:outline-none"
+                          placeholder="Nome do grupo"
+                        />
+                      </div>
+
+                      {/* Admin Checkbox */}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id={`admin-${user.id}`}
+                          checked={editForm.is_admin}
+                          onChange={(e) => setEditForm({ ...editForm, is_admin: e.target.checked })}
+                          className="w-5 h-5 text-secondary border-gray-300 rounded focus:ring-secondary"
+                        />
+                        <label htmlFor={`admin-${user.id}`} className="text-sm font-medium text-gray-700">
+                          Administrador
+                        </label>
+                      </div>
+
+                      {/* Password (optional) */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Nova Senha <span className="text-gray-500 font-normal">(opcional)</span>
+                        </label>
+                        <input
+                          type="password"
+                          value={editForm.password}
+                          onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                          className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-secondary focus:outline-none"
+                          placeholder="Deixe em branco para manter a senha atual"
+                        />
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          onClick={() => saveEdit(user.id)}
+                          disabled={saving}
+                          className="flex-1 bg-secondary text-white py-2 rounded-lg hover:bg-secondary/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          <Save className="w-4 h-4" />
+                          {saving ? "Salvando..." : "Salvar"}
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          disabled={saving}
+                          className="px-6 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          <X className="w-4 h-4" />
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-gray-800">{user.name}</h3>
-                    <p className="text-sm text-gray-600">{user.email}</p>
+                )
+              }
+
+              // View mode
+              return (
+                <div key={user.id} className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-5 shadow-elegant">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-lg">
+                        {user.full_name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-800">{user.full_name}</h3>
+                        <p className="text-sm text-gray-600">{user.phone}</p>
+                        {user.group_name && (
+                          <p className="text-xs text-gray-500 mt-1">Grupo: {user.group_name}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex items-center gap-2 px-3 py-1 rounded-lg border-2 ${getRoleColor(currentRole)}`}
+                      >
+                        {getRoleIcon(currentRole)}
+                        <span className="text-sm font-semibold">{getRoleName(currentRole)}</span>
+                      </div>
+                      <button
+                        onClick={() => startEdit(user)}
+                        className="px-4 py-2 bg-blue-50 text-primary rounded-lg hover:bg-blue-100 transition flex items-center gap-2"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        Editar
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex items-center gap-2 px-3 py-1 rounded-lg border-2 ${getRoleColor(user.role || "cliente")}`}
-                  >
-                    {getRoleIcon(user.role || "cliente")}
-                    <span className="text-sm font-semibold">{getRoleName(user.role || "cliente")}</span>
-                  </div>
-                  <select
-                    value={user.role || "cliente"}
-                    onChange={(e) => updateUserRole(user.id!, e.target.value as "admin" | "recepcao" | "cliente")}
-                    className="px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-secondary focus:outline-none text-sm"
-                  >
-                    <option value="cliente">Cliente</option>
-                    <option value="recepcao">Recepção</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              )
+            })}
+          </div>
+        )}
 
         {/* Role Descriptions */}
         <div className="mt-8 bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-6 shadow-elegant">

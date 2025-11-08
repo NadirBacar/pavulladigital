@@ -3,18 +3,23 @@
 // src/pages/Home.tsx
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Calendar, Clock, Camera, QrCode, Trophy, Zap, Gift, ChevronRight, FileText, Users } from "lucide-react"
+import { Calendar, Clock, QrCode, Trophy, Zap, Gift, ChevronRight, Users, UserPlus, CheckCircle2 } from "lucide-react"
 import BackgroundWithLogo from "@/components/BackgroundWithLogo"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import QRScannerModal from "@/components/QRScannerModal"
-import { useApp } from "@/contexts/AppContext"
+import { useAuth } from "@/contexts/AuthContext"
+import { fetchActivities, ApiActivity } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 
 const Home = () => {
   const navigate = useNavigate()
-  const { currentUser, activities } = useApp()
+  const { user, isAdmin } = useAuth()
+  const { toast } = useToast()
   const [showQRScanner, setShowQRScanner] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [activities, setActivities] = useState<ApiActivity[]>([])
+  const [loading, setLoading] = useState(true)
 
   // Atualiza o horário a cada segundo
   useEffect(() => {
@@ -25,9 +30,31 @@ const Home = () => {
     return () => clearInterval(timer)
   }, [])
 
+  // Fetch activities on mount
+  useEffect(() => {
+    const loadActivities = async () => {
+      try {
+        setLoading(true)
+        const data = await fetchActivities()
+        setActivities(data)
+      } catch (error) {
+        console.error("Error fetching activities:", error)
+        toast({
+          title: "Erro",
+          description: "Falha ao carregar atividades.",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadActivities()
+  }, [toast])
+
   // Formata a hora no formato HH:MM:SS
   const formatTime = (date: Date): string => {
-    return date.toLocaleTimeString("pt-BR", {
+    return date.toLocaleTimeString("pt-PT", {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
@@ -36,7 +63,7 @@ const Home = () => {
 
   // Formata a data completa
   const formatDate = (date: Date): string => {
-    return date.toLocaleDateString("pt-BR", {
+    return date.toLocaleDateString("pt-PT", {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -44,29 +71,15 @@ const Home = () => {
     })
   }
 
-  const getNextActivity = () => {
-    const now = new Date()
-    const currentDay = now.getDate()
-    const currentHour = now.getHours()
-    const currentMinute = now.getMinutes()
-
-    // Filter today's activities that haven't happened yet
-    const upcomingActivities = activities
-      .filter((activity) => {
-        if (activity.day !== currentDay || activity.completed) return false
-        const [activityHour, activityMinute] = activity.time.split(":").map(Number)
-        return activityHour > currentHour || (activityHour === currentHour && activityMinute > currentMinute)
-      })
-      .sort((a, b) => a.time.localeCompare(b.time))
-
-    return upcomingActivities[0] || null
+  // Get today's activities stats
+  const getTodayStats = () => {
+    const today = new Date().toISOString().split('T')[0]
+    const todayActivities = activities.filter(a => a.activity_date === today)
+    const signedCount = todayActivities.filter(a => a.has_signed).length
+    return { total: todayActivities.length, signed: signedCount }
   }
 
-  const nextActivity = getNextActivity()
-
-  const isAdmin = currentUser?.role === "admin"
-  const isRecepcao = currentUser?.role === "recepcao"
-  const isCliente = currentUser?.role === "cliente"
+  const todayStats = getTodayStats()
 
   return (
     <div className="min-h-screen bg-blue-50">
@@ -77,7 +90,11 @@ const Home = () => {
         {/* Cabeçalho - Saudação e Data */}
         <div className="mb-6">
           <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-5 shadow-elegant">
-            <h2 className="text-2xl font-bold text-gray-800 mb-1">Olá, {currentUser?.name || "Visitante"}!</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-1">
+              Olá, {user?.full_name || "Visitante"}!
+              {/* Uncomment when group feature is needed: */}
+              {/* {user?.group_name && ` - ${user.group_name}`} */}
+            </h2>
             <p className="text-gray-600 text-sm capitalize">{formatDate(currentTime)}</p>
           </div>
         </div>
@@ -92,33 +109,37 @@ const Home = () => {
             <p className="text-4xl font-bold text-primary tabular-nums">{formatTime(currentTime)}</p>
           </div>
 
-          {(isRecepcao || isAdmin) && (
-            <button
-              onClick={() => navigate("/documents")}
-              className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 shadow-elegant hover:shadow-glow transition-all transform hover:scale-105 text-white"
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <FileText className="w-6 h-6" />
-                <span className="text-sm font-medium">Documentos</span>
-              </div>
-              <p className="text-sm opacity-90 mb-1">Gerenciar documentos</p>
-              <p className="text-2xl font-bold">Fiscalizados</p>
-            </button>
-          )}
+          {/* Atividades de Hoje */}
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-elegant text-white">
+            <div className="flex items-center gap-2 mb-3">
+              <CheckCircle2 className="w-6 h-6" />
+              <span className="text-sm font-medium">Atividades de Hoje</span>
+            </div>
+            {loading ? (
+              <p className="text-sm opacity-90">Carregando...</p>
+            ) : (
+              <>
+                <p className="text-sm opacity-90 mb-1">Assinadas / Total</p>
+                <p className="text-4xl font-bold">
+                  {todayStats.signed} / {todayStats.total}
+                </p>
+              </>
+            )}
+          </div>
 
-          {(isCliente || isAdmin) && (
-            <button
-              onClick={() => setShowQRScanner(true)}
-              className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 shadow-elegant hover:shadow-glow transition-all transform hover:scale-105 text-white"
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <QrCode className="w-6 h-6" />
-                <span className="text-sm font-medium">Check-in QR</span>
+          {/* Assinar QR */}
+          <button
+            onClick={() => setShowQRScanner(true)}
+            className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 shadow-elegant hover:shadow-glow transition-all transform hover:scale-105 text-white col-span-2"
+          >
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <QrCode className="w-8 h-8" />
+              <div className="text-center">
+                <p className="text-xl font-bold">Assinar Atividade</p>
+                <p className="text-sm opacity-90">Escanear código QR</p>
               </div>
-              <p className="text-sm opacity-90 mb-1">Escanear código do quarto</p>
-              <p className="text-2xl font-bold">Fazer Check-in</p>
-            </button>
-          )}
+            </div>
+          </button>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -142,21 +163,6 @@ const Home = () => {
             </div>
           </button>
 
-          <div className="gradient-primary rounded-2xl p-6 shadow-elegant text-white">
-            <div className="flex items-center gap-2 mb-3">
-              <Clock className="w-6 h-6" />
-              <span className="text-sm font-medium">Próxima Atividade</span>
-            </div>
-            {nextActivity ? (
-              <>
-                <p className="text-sm opacity-90 mb-1">{nextActivity.title}</p>
-                <p className="text-4xl font-bold">{nextActivity.time}</p>
-              </>
-            ) : (
-              <p className="text-sm opacity-90">No momento não consta nenhuma atividade</p>
-            )}
-          </div>
-
           {/* Agenda do Dia */}
           <button
             onClick={() => navigate("/agenda")}
@@ -174,39 +180,42 @@ const Home = () => {
             <ChevronRight className="w-6 h-6 text-gray-400" />
           </button>
 
-          {/* Memórias */}
-          <button
-            onClick={() => navigate("/memories")}
-            className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-6 shadow-elegant hover:shadow-glow transition-all transform hover:scale-105 flex items-center justify-between group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-yellow-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
-                <Camera className="w-7 h-7 text-secondary" />
-              </div>
-              <div className="text-left">
-                <h3 className="text-lg font-bold text-gray-800">Memórias</h3>
-                <p className="text-sm text-gray-600">Compartilhar momentos</p>
-              </div>
-            </div>
-            <ChevronRight className="w-6 h-6 text-gray-400" />
-          </button>
-
           {isAdmin && (
-            <button
-              onClick={() => navigate("/user-management")}
-              className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 shadow-elegant hover:shadow-glow transition-all transform hover:scale-105 flex items-center justify-between group text-white"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
-                  <Users className="w-7 h-7 text-white" />
+            <>
+              {/* Registrar Usuário */}
+              <button
+                onClick={() => navigate("/register")}
+                className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 shadow-elegant hover:shadow-glow transition-all transform hover:scale-105 flex items-center justify-between group text-white"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
+                    <UserPlus className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-lg font-bold">Registrar Usuário</h3>
+                    <p className="text-sm opacity-90">Criar nova conta</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <h3 className="text-lg font-bold">Gestão de Usuários</h3>
-                  <p className="text-sm opacity-90">Gerenciar grupos</p>
+                <ChevronRight className="w-6 h-6 text-white opacity-70" />
+              </button>
+
+              {/* Gestão de Usuários */}
+              <button
+                onClick={() => navigate("/user-management")}
+                className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 shadow-elegant hover:shadow-glow transition-all transform hover:scale-105 flex items-center justify-between group text-white"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
+                    <Users className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-lg font-bold">Gestão de Usuários</h3>
+                    <p className="text-sm opacity-90">Gerenciar grupos</p>
+                  </div>
                 </div>
-              </div>
-              <ChevronRight className="w-6 h-6 text-white opacity-70" />
-            </button>
+                <ChevronRight className="w-6 h-6 text-white opacity-70" />
+              </button>
+            </>
           )}
         </div>
       </div>
