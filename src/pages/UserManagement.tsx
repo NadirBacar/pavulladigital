@@ -14,6 +14,7 @@ interface EditUserForm {
   group_name: string
   is_admin: boolean
   password: string
+  origin: string
 }
 
 const UserManagement = () => {
@@ -28,6 +29,7 @@ const UserManagement = () => {
     group_name: "",
     is_admin: false,
     password: "",
+    origin: ""
   })
   const [saving, setSaving] = useState(false)
 
@@ -37,6 +39,7 @@ const UserManagement = () => {
       try {
         setLoading(true)
         const data = await fetchUsers()
+        console.log(data)
         setUsers(data)
       } catch (error) {
         console.error("Error fetching users:", error)
@@ -124,6 +127,7 @@ const UserManagement = () => {
       group_name: user.group_name,
       is_admin: user.is_admin,
       password: "",
+      origin: user.origin
     })
   }
 
@@ -134,6 +138,7 @@ const UserManagement = () => {
       group_name: "",
       is_admin: false,
       password: "",
+      origin: ""
     })
   }
 
@@ -156,6 +161,7 @@ const UserManagement = () => {
         editForm.group_name,
         editForm.is_admin,
         true,
+        editForm.origin,
         editForm.password
       )
 
@@ -254,6 +260,18 @@ const UserManagement = () => {
                         />
                       </div>
 
+                      {/* Institution of Origin */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Instituição de Origem</label>
+                        <input
+                          type="text"
+                          value={editForm.origin}
+                          onChange={(e) => setEditForm({ ...editForm, origin: e.target.value })}
+                          className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-secondary focus:outline-none"
+                          placeholder="Instituição de Origem"
+                        />
+                      </div>
+
                       {/* Group Name */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Grupo</label>
@@ -329,6 +347,7 @@ const UserManagement = () => {
                       <div>
                         <h3 className="font-bold text-gray-800">{user.full_name}</h3>
                         <p className="text-sm text-gray-600">{user.phone}</p>
+                        <p className="text-sm text-gray-600">{user.origin}</p>
                         {user.group_name && (
                           <p className="text-xs text-gray-500 mt-1">Grupo: {user.group_name}</p>
                         )}

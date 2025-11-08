@@ -1,8 +1,8 @@
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "https://api.cursoapp.pavulla.com/api";
+  import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 const QRCODE_BASE_URL =
-  import.meta.env.QRCODE_BASE_URL || "https://qrcode.pavulla.com/v1";
+  import.meta.env.QRCODE_BASE_URL || "http://153.92.209.19:8081/v1";
 
 const QRCODE_CLIENTAPP_ID =
   import.meta.env.QRCODE_CLIENTAPP_ID || "5ccc98c1-002c-417d-9df6-8977a997dcbd";
@@ -31,6 +31,19 @@ const getHeaders = (includeAuth = true) => {
   return headers;
 };
 
+export interface ApiComment {
+  id: string;
+  memory_id: string;
+  user_id: string;
+  comment: string;
+  created_at: string;
+  user?: {
+    id: string;
+    full_name: string;
+    email: string;
+  };
+}
+
 // API Response Types
 export interface ApiActivity {
   id: string;
@@ -53,6 +66,7 @@ export interface ApiMemory {
   content_type: "text" | "image" | "document" | "recording";
   file_url: string | null;
   created_at: string;
+  comments?: ApiComment[]; // Add this line
 }
 
 export interface ApiLoginResponse {
@@ -92,7 +106,8 @@ export const register = async (
   phone: string,
   password: string,
   groupName: string,
-  isAdmin: boolean
+  isAdmin: boolean,
+  origin: string,
 ): Promise<{ message: string; user_id: string }> => {
   const response = await fetch(`${API_BASE_URL}/auth/register`, {
     method: "POST",
@@ -103,6 +118,7 @@ export const register = async (
       password,
       group_name: groupName,
       is_admin: isAdmin,
+      origin: origin,
     }),
   });
 
@@ -303,6 +319,7 @@ export interface ApiUser {
   phone: string;
   group_name: string;
   is_admin: boolean;
+  origin: string;
 }
 
 export const fetchUsers = async (): Promise<ApiUser[]> => {
@@ -324,13 +341,15 @@ export const updateUser = async (
   groupName: string,
   isAdmin: boolean,
   isActive: boolean,
-  password?: string
+  origin: string,
+  password?: string,
 ): Promise<ApiUser> => {
   const body: any = {
     full_name: fullName,
     group_name: groupName,
     is_admin: isAdmin,
     is_active: isActive,
+    origin: origin
   };
 
   // Only include password if provided

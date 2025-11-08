@@ -1,49 +1,52 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, ArrowLeft } from 'lucide-react';
-import Header from '@/components/Header';
-import { register as apiRegister } from '@/lib/api';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { User, ArrowLeft } from "lucide-react";
+import Header from "@/components/Header";
+import { register as apiRegister } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const [registerForm, setRegisterForm] = useState({
-    fullName: '',
-    phone: '',
-    password: '',
-    groupName: '',
+    fullName: "",
+    phone: "",
+    password: "",
+    groupName: "",
     isAdmin: false,
+    origin: "",
   });
-  const [phoneError, setPhoneError] = useState('');
+  const [phoneError, setPhoneError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   // Phone validation
   const validatePhone = (phone: string) => {
     if (phone.length === 0) {
-      setPhoneError('');
+      setPhoneError("");
       return;
     }
 
     if (phone.length < 9) {
-      setPhoneError('Número incompleto');
+      setPhoneError("Número incompleto");
       return;
     }
 
-    const validPrefixes = ['82', '83', '84', '85', '86', '87'];
+    const validPrefixes = ["82", "83", "84", "85", "86", "87"];
     const prefix = phone.substring(0, 2);
 
     if (!validPrefixes.includes(prefix)) {
-      setPhoneError('Número inválido. Deve começar com 82, 83, 84, 85, 86 ou 87');
+      setPhoneError(
+        "Número inválido. Deve começar com 82, 83, 84, 85, 86 ou 87"
+      );
       return;
     }
 
-    setPhoneError('');
+    setPhoneError("");
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
+    const value = e.target.value.replace(/\D/g, "");
     if (value.length <= 9) {
       setRegisterForm({ ...registerForm, phone: value });
       validatePhone(value);
@@ -60,9 +63,9 @@ const Register = () => {
       phoneError
     ) {
       toast({
-        title: 'Campos incompletos',
-        description: 'Preencha todos os campos obrigatórios.',
-        variant: 'destructive',
+        title: "Campos incompletos",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive",
       });
       return;
     }
@@ -75,28 +78,30 @@ const Register = () => {
         registerForm.phone,
         registerForm.password,
         registerForm.groupName,
-        registerForm.isAdmin
+        registerForm.isAdmin,
+        registerForm.origin
       );
 
       toast({
-        title: 'Sucesso!',
-        description: 'Usuário registrado com sucesso.',
+        title: "Sucesso!",
+        description: "Usuário registrado com sucesso.",
       });
 
       // Reset form
       setRegisterForm({
-        fullName: '',
-        phone: '',
-        password: '',
-        groupName: '',
+        fullName: "",
+        phone: "",
+        password: "",
+        groupName: "",
         isAdmin: false,
+        origin: "",
       });
     } catch (error: any) {
-      console.error('Registration error:', error);
+      console.error("Registration error:", error);
       toast({
-        title: 'Erro no registro',
-        description: error.message || 'Falha ao registrar usuário.',
-        variant: 'destructive',
+        title: "Erro no registro",
+        description: error.message || "Falha ao registrar usuário.",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -110,7 +115,7 @@ const Register = () => {
       <div className="max-w-2xl mx-auto p-4 pb-24">
         {/* Back Button */}
         <button
-          onClick={() => navigate('/home')}
+          onClick={() => navigate("/home")}
           className="flex items-center gap-2 text-primary hover:text-primary/80 font-medium mb-6 bg-white px-4 py-2 rounded-lg shadow-md transition"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -125,8 +130,12 @@ const Register = () => {
                 <User className="w-12 h-12 text-white" />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-1">Registrar Novo Usuário</h1>
-            <p className="text-sm text-gray-600">Apenas administradores podem criar contas</p>
+            <h1 className="text-2xl font-bold text-gray-800 mb-1">
+              Registrar Novo Usuário
+            </h1>
+            <p className="text-sm text-gray-600">
+              Apenas administradores podem criar contas
+            </p>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-4">
@@ -159,15 +168,42 @@ const Register = () => {
                 onChange={handlePhoneChange}
                 className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition ${
                   phoneError
-                    ? 'border-red-500 focus:border-red-500'
-                    : 'border-border focus:border-primary'
+                    ? "border-red-500 focus:border-red-500"
+                    : "border-border focus:border-primary"
                 }`}
                 placeholder="8########"
                 maxLength={9}
                 disabled={isLoading}
                 required
               />
-              {phoneError && <p className="text-red-500 text-sm mt-1">{phoneError}</p>}
+              {phoneError && (
+                <p className="text-red-500 text-sm mt-1">{phoneError}</p>
+              )}
+            </div>
+            {/* Institution of Origin */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Instituição de Origem *
+              </label>
+              <input
+                type="text"
+                value={registerForm.origin}
+                onChange={(e) =>
+                  setRegisterForm({ ...registerForm, origin: e.target.value })
+                }
+                className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition ${
+                  phoneError
+                    ? "border-red-500 focus:border-red-500"
+                    : "border-border focus:border-primary"
+                }`}
+                placeholder="Pavulla SA."
+                maxLength={9}
+                disabled={isLoading}
+                required
+              />
+              {phoneError && (
+                <p className="text-red-500 text-sm mt-1">{phoneError}</p>
+              )}
             </div>
 
             {/* Password */}
@@ -197,7 +233,10 @@ const Register = () => {
                 type="text"
                 value={registerForm.groupName}
                 onChange={(e) =>
-                  setRegisterForm({ ...registerForm, groupName: e.target.value })
+                  setRegisterForm({
+                    ...registerForm,
+                    groupName: e.target.value,
+                  })
                 }
                 className="w-full px-4 py-3 border-2 border-border rounded-xl focus:border-primary focus:outline-none transition"
                 placeholder="Nome do grupo"
@@ -212,12 +251,18 @@ const Register = () => {
                 id="isAdmin"
                 checked={registerForm.isAdmin}
                 onChange={(e) =>
-                  setRegisterForm({ ...registerForm, isAdmin: e.target.checked })
+                  setRegisterForm({
+                    ...registerForm,
+                    isAdmin: e.target.checked,
+                  })
                 }
                 className="w-5 h-5 text-primary rounded focus:ring-2 focus:ring-primary"
                 disabled={isLoading}
               />
-              <label htmlFor="isAdmin" className="text-sm font-medium text-gray-700">
+              <label
+                htmlFor="isAdmin"
+                className="text-sm font-medium text-gray-700"
+              >
                 Registrar como administrador
               </label>
             </div>
@@ -234,7 +279,7 @@ const Register = () => {
               }
               className="w-full bg-secondary hover:bg-secondary/90 text-white py-3 rounded-xl font-semibold transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Registrando...' : 'Registrar Usuário'}
+              {isLoading ? "Registrando..." : "Registrar Usuário"}
             </button>
           </form>
         </div>
