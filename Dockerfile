@@ -1,14 +1,14 @@
-# Stage 1 — build (use Debian-based Node so rollup's native deps load correctly)
-FROM node:24-bullseye-slim AS build
+# Stage 1 — build
+FROM node:24-alpine AS build
 WORKDIR /app
 
-# copy package files first for caching
+# Copy package files
 COPY package*.json ./
 
-# install (use npm ci for reproducible installs)
-RUN npm ci
+# Install dependencies (npm install handles optional deps better than npm ci)
+RUN npm install
 
-# copy source and build
+# Copy source and build
 COPY . .
 RUN npm run build
 
