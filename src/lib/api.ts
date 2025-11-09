@@ -148,9 +148,8 @@ export const fetchActivities = async (): Promise<ApiActivity[]> => {
 };
 
 export const scanQRCode = async (id: string, addLog: (log: string) => void) => {
-  const url = "https://google.com";
+  const url = new URL(`/qrcodes/${id}/scan`, QRCODE_BASE_URL).toString();
   addLog(`URL from constructor: ${url}`);
-  addLog(url);
   const response = await fetch(url, {
     headers: {
       client_app_id: QRCODE_CLIENTAPP_ID,
