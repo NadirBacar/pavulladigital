@@ -1,14 +1,11 @@
 # Stage 1 — build
-FROM node:24-alpine AS build
+FROM node:24-slim AS build
 WORKDIR /app
 
-# Install build dependencies for native modules
-RUN apk add --no-cache python3 make g++
+# Copy package.json only
+COPY package.json ./
 
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
+# Install dependencies (this will create a fresh package-lock.json)
 RUN npm install
 
 # Copy source and build
