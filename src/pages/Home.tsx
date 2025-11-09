@@ -1,56 +1,68 @@
-"use client"
+"use client";
 
 // src/pages/Home.tsx
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { Calendar, Clock, QrCode, Trophy, Zap, Gift, ChevronRight, Users, UserPlus, CheckCircle2, CalendarPlus } from "lucide-react"
-import BackgroundWithLogo from "@/components/BackgroundWithLogo"
-import Header from "@/components/Header"
-import Footer from "@/components/Footer"
-import QRScannerModal from "@/components/QRScannerModal"
-import { useAuth } from "@/contexts/AuthContext"
-import { fetchActivities, ApiActivity, scanQRCode } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Calendar,
+  Clock,
+  QrCode,
+  Trophy,
+  Zap,
+  Gift,
+  ChevronRight,
+  Users,
+  UserPlus,
+  CheckCircle2,
+  CalendarPlus,
+} from "lucide-react";
+import BackgroundWithLogo from "@/components/BackgroundWithLogo";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import QRScannerModal from "@/components/QRScannerModal";
+import { useAuth } from "@/contexts/AuthContext";
+import { fetchActivities, ApiActivity, scanQRCode } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 const Home = () => {
-  const navigate = useNavigate()
-  const { user, isAdmin } = useAuth()
-  const { toast } = useToast()
-  const [showQRScanner, setShowQRScanner] = useState(false)
-  const [currentTime, setCurrentTime] = useState(new Date())
-  const [activities, setActivities] = useState<ApiActivity[]>([])
-  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
+  const { toast } = useToast();
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [activities, setActivities] = useState<ApiActivity[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Atualiza o horário a cada segundo
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
+      setCurrentTime(new Date());
+    }, 1000);
 
-    return () => clearInterval(timer)
-  }, [])
+    return () => clearInterval(timer);
+  }, []);
 
   // Fetch activities on mount
   useEffect(() => {
     const loadActivities = async () => {
       try {
-        setLoading(true)
-        const data = await fetchActivities()
-        setActivities(data)
+        setLoading(true);
+        const data = await fetchActivities();
+        setActivities(data);
       } catch (error) {
-        console.error("Error fetching activities:", error)
+        console.error("Error fetching activities:", error);
         toast({
           title: "Erro",
           description: "Falha ao carregar atividades.",
           variant: "destructive",
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    loadActivities()
-  }, [toast])
+    loadActivities();
+  }, [toast]);
 
   // Formata a hora no formato HH:MM:SS
   const formatTime = (date: Date): string => {
@@ -58,8 +70,8 @@ const Home = () => {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-    })
-  }
+    });
+  };
 
   // Formata a data completa
   const formatDate = (date: Date): string => {
@@ -68,18 +80,18 @@ const Home = () => {
       day: "numeric",
       month: "long",
       year: "numeric",
-    })
-  }
+    });
+  };
 
   // Get today's activities stats
   const getTodayStats = () => {
-    const today = new Date().toISOString().split('T')[0]
-    const todayActivities = activities.filter(a => a.activity_date === today)
-    const signedCount = todayActivities.filter(a => a.has_signed).length
-    return { total: todayActivities.length, signed: signedCount }
-  }
+    const today = new Date().toISOString().split("T")[0];
+    const todayActivities = activities.filter((a) => a.activity_date === today);
+    const signedCount = todayActivities.filter((a) => a.has_signed).length;
+    return { total: todayActivities.length, signed: signedCount };
+  };
 
-  const todayStats = getTodayStats()
+  const todayStats = getTodayStats();
 
   return (
     <div className="min-h-screen bg-blue-50">
@@ -95,7 +107,9 @@ const Home = () => {
               {/* Uncomment when group feature is needed: */}
               {/* {user?.group_name && ` - ${user.group_name}`} */}
             </h2>
-            <p className="text-gray-600 text-sm capitalize">{formatDate(currentTime)}</p>
+            <p className="text-gray-600 text-sm capitalize">
+              {formatDate(currentTime)}
+            </p>
           </div>
         </div>
 
@@ -104,9 +118,13 @@ const Home = () => {
           <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-6 shadow-elegant">
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-6 h-6 text-primary" />
-              <span className="text-sm text-gray-600 font-medium">Horário Atual</span>
+              <span className="text-sm text-gray-600 font-medium">
+                Horário Atual
+              </span>
             </div>
-            <p className="text-4xl font-bold text-primary tabular-nums">{formatTime(currentTime)}</p>
+            <p className="text-4xl font-bold text-primary tabular-nums">
+              {formatTime(currentTime)}
+            </p>
           </div>
 
           {/* Atividades de Hoje */}
@@ -154,11 +172,17 @@ const Home = () => {
                 <Trophy className="w-12 h-12 text-white" />
                 <Zap className="w-8 h-8 text-white animate-pulse" />
               </div>
-              <h3 className="text-2xl font-black text-white mb-2">Quiz PAVULLA</h3>
-              <p className="text-white text-sm mb-3 font-medium">Teste seus conhecimentos e ganhe prêmios!</p>
+              <h3 className="text-2xl font-black text-white mb-2">
+                Quiz PAVULLA
+              </h3>
+              <p className="text-white text-sm mb-3 font-medium">
+                Teste seus conhecimentos e ganhe prêmios!
+              </p>
               <div className="flex items-center gap-2 text-white text-sm">
                 <Gift className="w-5 h-5" />
-                <span className="font-semibold">Boné, Agenda e muito mais!</span>
+                <span className="font-semibold">
+                  Boné, Agenda e muito mais!
+                </span>
               </div>
             </div>
           </button>
@@ -173,7 +197,9 @@ const Home = () => {
                 <Calendar className="w-7 h-7 text-primary" />
               </div>
               <div className="text-left">
-                <h3 className="text-lg font-bold text-gray-800">Agenda do Dia</h3>
+                <h3 className="text-lg font-bold text-gray-800">
+                  Agenda do Dia
+                </h3>
                 <p className="text-sm text-gray-600">Ver atividades</p>
               </div>
             </div>
@@ -239,9 +265,16 @@ const Home = () => {
 
       <Footer />
 
-      {showQRScanner && <QRScannerModal onClose={() => setShowQRScanner(false)} />}
+      {showQRScanner && (
+        <QRScannerModal
+          onClose={() => {
+            setShowQRScanner(false);
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

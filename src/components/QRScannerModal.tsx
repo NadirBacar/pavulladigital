@@ -290,9 +290,6 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
             <p className="text-sm font-semibold text-green-800 mb-2">
               ✓ Sucesso!
             </p>
-            <pre className="text-xs text-green-700 overflow-x-auto whitespace-pre-wrap break-all">
-              {JSON.stringify(processingResult, null, 2)}
-            </pre>
           </div>
         )}
 
