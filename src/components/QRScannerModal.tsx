@@ -135,7 +135,7 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
         addLog("Chamando onQRCodeDetected...");
         setDebugInfo(`Iniciando processamento da URL...`);
         try {
-          const result = await scanIt(id);
+          const result = await scanIt(id, addLog);
           addLog("Sucesso! Resultado recebido");
           setProcessingResult(result);
           setDebugInfo(`Processamento concluído!`);

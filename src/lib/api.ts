@@ -147,14 +147,14 @@ export const fetchActivities = async (): Promise<ApiActivity[]> => {
   return data.activities || [];
 };
 
-export const scanQRCode = async (id: string) => {
-  const response = await fetch(`${QRCODE_BASE_URL}/qrcodes/${id}/scan`, {
+export const scanQRCode = async (id: string, addLog: (log:string)=>void) => {
+  const url = `${QRCODE_BASE_URL}/qrcodes/${id}/scan`
+  addLog(url)
+  const response = await fetch(url, {
     headers: {
       client_app_id: QRCODE_CLIENTAPP_ID,
     },
   });
-
-  // console.log(response);
   if (!response.ok) {
     throw new Error("Failed to fetch activities");
   }
