@@ -87,15 +87,10 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
       // Then uncomment the code below and add this import at the top:
       // import jsQR from "jsqr"
       
-      /*
       const code = jsQR(imageData.data, imageData.width, imageData.height, {
         inversionAttempts: "dontInvert",
       })
       return code?.data || null
-      */
-      
-      // Remove this line after implementing jsQR:
-      return null
     }
 
     startCamera()
@@ -113,16 +108,6 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
       }
     }
   }, [onClose, onQRCodeDetected])
-
-  const handleManualScan = () => {
-    // Test function - remove in production
-    const testUrl = "https://example.com/checkin/room-101"
-    setIsScanning(true)
-    setTimeout(() => {
-      onQRCodeDetected(testUrl)
-      onClose()
-    }, 500)
-  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
@@ -169,12 +154,6 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
         </p>
         
         <div className="space-y-3">
-          <button
-            onClick={handleManualScan}
-            className="w-full bg-green-500 text-white py-3 rounded-xl font-semibold hover:bg-green-600 transition"
-          >
-            Simular Scan (Teste)
-          </button>
           <button
             onClick={onClose}
             className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition"

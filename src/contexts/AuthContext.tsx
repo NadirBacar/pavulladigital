@@ -1,15 +1,8 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
-import { useNavigate } from "react-router-dom";
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-const TOKEN_KEY = "auth_token";
-const USER_KEY = "auth_user";
-const TIMESTAMP_KEY = "auth_timestamp";
+const TOKEN_KEY = 'auth_token';
+const USER_KEY = 'auth_user';
+const TIMESTAMP_KEY = 'auth_timestamp';
 const TOKEN_EXPIRY_DAYS = 7;
 
 interface User {
@@ -25,6 +18,7 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isLoading: boolean; // Add this
   login: (token: string, user: User) => void;
   logout: () => void;
   checkAuth: () => boolean;
@@ -36,33 +30,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // Check if token is expired (older than 7 days)
-  const isTokenExpired = (): boolean => {
-    const timestamp = localStorage.getItem(TIMESTAMP_KEY);
-    if (!timestamp) return true;
-
-    const tokenDate = new Date(timestamp);
-    const now = new Date();
-    const daysDiff =
-      (now.getTime() - tokenDate.getTime()) / (1000 * 60 * 60 * 24);
-
-    return daysDiff > TOKEN_EXPIRY_DAYS;
-  };
+  const [isLoading, setIsLoading] = useState(true); // Add this
 
   useEffect(() => {
+    console.log('🔍 Checking localStorage on mount...');
     const storedToken = localStorage.getItem(TOKEN_KEY);
     const storedUser = localStorage.getItem(USER_KEY);
     const timestamp = localStorage.getItem(TIMESTAMP_KEY);
+    
+    console.log('Token:', storedToken);
+    console.log('User:', storedUser);
+    console.log('Timestamp:', timestamp);
 
     if (storedToken && storedUser) {
-      // Check expiry inline
+      // Check if token is expired
       let isExpired = true;
       if (timestamp) {
         const tokenDate = new Date(timestamp);
         const now = new Date();
-        const daysDiff =
-          (now.getTime() - tokenDate.getTime()) / (1000 * 60 * 60 * 24);
+        const daysDiff = (now.getTime() - tokenDate.getTime()) / (1000 * 60 * 60 * 24);
         isExpired = daysDiff > TOKEN_EXPIRY_DAYS;
       }
 
@@ -72,39 +58,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setToken(storedToken);
           setUser(parsedUser);
           setIsAuthenticated(true);
+          console.log('✅ Auth restored from localStorage');
         } catch (error) {
-          console.error("Error parsing stored user:", error);
-          // Clear invalid data
+          console.error('Error parsing stored user:', error);
           localStorage.removeItem(TOKEN_KEY);
           localStorage.removeItem(USER_KEY);
           localStorage.removeItem(TIMESTAMP_KEY);
         }
       } else {
-        // Token expired, clear everything
+        console.log('❌ Token expired, clearing localStorage');
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
         localStorage.removeItem(TIMESTAMP_KEY);
       }
     }
+    
+    setIsLoading(false); // Done checking
+    console.log('✅ Auth check complete');
   }, []);
 
   const login = (newToken: string, newUser: User) => {
-    // Store token, user, and timestamp
     localStorage.setItem(TOKEN_KEY, newToken);
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
     localStorage.setItem(TIMESTAMP_KEY, new Date().toISOString());
-
     setToken(newToken);
     setUser(newUser);
     setIsAuthenticated(true);
   };
 
   const logout = () => {
-    // Clear all auth data
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(TIMESTAMP_KEY);
-
     setToken(null);
     setUser(null);
     setIsAuthenticated(false);
@@ -112,10 +97,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = (): boolean => {
     if (!token || !user) return false;
-    if (isTokenExpired()) {
+    
+    const timestamp = localStorage.getItem(TIMESTAMP_KEY);
+    if (!timestamp) return false;
+    
+    const tokenDate = new Date(timestamp);
+    const now = new Date();
+    const daysDiff = (now.getTime() - tokenDate.getTime()) / (1000 * 60 * 60 * 24);
+    
+    if (daysDiff > TOKEN_EXPIRY_DAYS) {
       logout();
       return false;
     }
+    
     return true;
   };
 
@@ -124,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     token,
     isAuthenticated,
     isAdmin: user?.is_admin || false,
+    isLoading, // Add this
     login,
     logout,
     checkAuth,
@@ -135,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }
