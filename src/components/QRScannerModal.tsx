@@ -66,10 +66,16 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
       
       if (!context || video.readyState !== video.HAVE_ENOUGH_DATA) return
 
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
+      // Swap dimensions because video is rotated 90 degrees
+      canvas.width = video.videoHeight
+      canvas.height = video.videoWidth
       
-      context.drawImage(video, 0, 0, canvas.width, canvas.height)
+      // Rotate the canvas context to match the rotated video
+      context.save()
+      context.translate(canvas.width / 2, canvas.height / 2)
+      context.rotate(90 * Math.PI / 180)
+      context.drawImage(video, -video.videoWidth / 2, -video.videoHeight / 2, video.videoWidth, video.videoHeight)
+      context.restore()
 
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
       const code = detectQRCode(imageData)
@@ -77,7 +83,8 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
       if (code) {
         setScannedData(code)
         setIsScanning(true)
-        setDebugInfo(`QR Code detectado: ${code}`)
+        setDebugInfo(`QR Code detectado`)
+        console.log("QR Code URL:", code)
         
         if (scanIntervalRef.current) {
           clearInterval(scanIntervalRef.current)
@@ -90,14 +97,22 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
         
         // Process the QR code
         setIsProcessing(true)
+        setDebugInfo(`Iniciando processamento da URL...`)
         try {
           const result = await onQRCodeDetected(code)
           setProcessingResult(result)
           setDebugInfo(`Processamento concluído!`)
           setError(null)
         } catch (err: any) {
-          setError(`Erro ao processar: ${err.message || err}`)
-          setDebugInfo(`Falha no processamento`)
+          console.error("Full error:", err)
+          const errorMsg = err.message || err.toString()
+          setError(`Erro: ${errorMsg}`)
+          setDebugInfo(`Falha: ${errorMsg}`)
+          
+          // Try to get more details
+          if (err.cause) {
+            setError(prev => `${prev}\nCausa: ${err.cause}`)
+          }
         } finally {
           setIsProcessing(false)
         }
@@ -138,16 +153,20 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
         </div>
         
         {hasCamera ? (
-          <div className="relative">
+          <div className="relative w-full h-64 bg-gray-900 rounded-2xl overflow-hidden">
             <video 
               ref={videoRef} 
               autoPlay 
               playsInline 
               muted
-              className="w-full h-64 bg-gray-900 rounded-2xl object-cover"
+              className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto"
+              style={{
+                transform: 'translate(-50%, -50%) rotate(90deg)',
+                objectFit: 'cover'
+              }}
             />
             <canvas ref={canvasRef} className="hidden" />
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
               <div className="w-48 h-48 border-4 border-green-500 rounded-2xl animate-pulse"></div>
             </div>
             {isScanning && (
