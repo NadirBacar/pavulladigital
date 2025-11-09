@@ -1,11 +1,11 @@
 "use client"
-import { QrCode, X } from "lucide-react"
+import { QrCode, X, AlertCircle } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import jsQR from "jsqr"
 
 interface QRScannerModalProps {
   onClose: () => void
-  onQRCodeDetected: (url: string) => void // Add your handler function here
+  onQRCodeDetected: (url: string) => void
 }
 
 const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
@@ -14,6 +14,8 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
   const [hasCamera, setHasCamera] = useState(true)
   const [isScanning, setIsScanning] = useState(false)
   const [scannedData, setScannedData] = useState<string | null>(null)
+  const [debugInfo, setDebugInfo] = useState<string>("")
+  const [error, setError] = useState<string | null>(null)
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -21,26 +23,39 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
 
     const startCamera = async () => {
       try {
+        // Request camera with specific constraints for better mobile support
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
+          video: { 
+            facingMode: "environment",
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
         })
+        
         if (videoRef.current) {
           videoRef.current.srcObject = stream
+          
+          // Add these attributes to prevent sideways rendering
+          videoRef.current.setAttribute('playsinline', 'true')
+          videoRef.current.setAttribute('autoplay', 'true')
+          
           videoRef.current.onloadedmetadata = () => {
             videoRef.current?.play()
+            setDebugInfo("Câmera iniciada com sucesso")
             startScanning()
           }
         }
       } catch (error) {
         console.error("Error accessing camera:", error)
         setHasCamera(false)
+        setError(`Erro ao acessar câmera: ${error}`)
       }
     }
 
     const startScanning = () => {
       scanIntervalRef.current = setInterval(() => {
         scanQRCode()
-      }, 500) // Scan every 500ms
+      }, 500)
     }
 
     const scanQRCode = () => {
@@ -52,8 +67,11 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
       
       if (!context || video.readyState !== video.HAVE_ENOUGH_DATA) return
 
+      // Use the video's actual dimensions
       canvas.width = video.videoWidth
       canvas.height = video.videoHeight
+      
+      // Draw the current video frame
       context.drawImage(video, 0, 0, canvas.width, canvas.height)
 
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
@@ -62,6 +80,8 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
       if (code) {
         setScannedData(code)
         setIsScanning(true)
+        setDebugInfo(`QR Code detectado: ${code}`)
+        
         if (scanIntervalRef.current) {
           clearInterval(scanIntervalRef.current)
         }
@@ -71,22 +91,18 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
           stream.getTracks().forEach((track) => track.stop())
         }
         
-        // ⭐ YOUR FUNCTION GETS CALLED HERE ⭐
-        onQRCodeDetected(code) // This calls your handler with the detected URL
-        
-        // Close modal after a short delay
-        setTimeout(() => {
-          onClose()
-        }, 500)
+        // Call your handler with the detected URL
+        try {
+          onQRCodeDetected(code)
+          setDebugInfo(`Processando URL: ${code}`)
+        } catch (err) {
+          setError(`Erro ao processar QR: ${err}`)
+          setDebugInfo(`Erro: ${err}`)
+        }
       }
     }
 
-    // Production-ready QR code detection using jsQR
     const detectQRCode = (imageData: ImageData): string | null => {
-      // IMPORTANT: Install jsQR first: npm install jsqr
-      // Then uncomment the code below and add this import at the top:
-      // import jsQR from "jsqr"
-      
       const code = jsQR(imageData.data, imageData.width, imageData.height, {
         inversionAttempts: "dontInvert",
       })
@@ -126,7 +142,8 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
               autoPlay 
               playsInline 
               muted
-              className="w-full h-64 bg-gray-900 rounded-2xl object-cover" 
+              className="w-full h-64 bg-gray-900 rounded-2xl object-cover"
+              style={{ transform: 'scaleX(1)' }}
             />
             <canvas ref={canvasRef} className="hidden" />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -135,7 +152,7 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
             {isScanning && (
               <div className="absolute inset-0 bg-green-500 bg-opacity-20 rounded-2xl flex items-center justify-center">
                 <div className="bg-white px-4 py-2 rounded-lg">
-                  <p className="text-green-600 font-semibold">Escaneando...</p>
+                  <p className="text-green-600 font-semibold">✓ Detectado!</p>
                 </div>
               </div>
             )}
@@ -149,6 +166,28 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
           </div>
         )}
         
+        {/* Debug Info Section */}
+        {(debugInfo || error || scannedData) && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-xl text-xs space-y-2">
+            {error && (
+              <div className="flex items-start gap-2 text-red-600">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <p className="break-all">{error}</p>
+              </div>
+            )}
+            {debugInfo && (
+              <p className="text-gray-600 break-all">
+                <span className="font-semibold">Status:</span> {debugInfo}
+              </p>
+            )}
+            {scannedData && (
+              <p className="text-green-600 break-all">
+                <span className="font-semibold">URL:</span> {scannedData}
+              </p>
+            )}
+          </div>
+        )}
+        
         <p className="text-gray-600 text-center my-4 text-sm">
           Aponte a câmera para o código QR do quarto
         </p>
@@ -158,7 +197,7 @@ const QRScannerModal = ({ onClose, onQRCodeDetected }: QRScannerModalProps) => {
             onClick={onClose}
             className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition"
           >
-            Cancelar
+            {scannedData ? "Fechar" : "Cancelar"}
           </button>
         </div>
       </div>
