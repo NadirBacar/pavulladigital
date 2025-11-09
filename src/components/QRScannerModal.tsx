@@ -33,34 +33,49 @@ const getHeaders = (includeAuth = true) => {
 };
 
 const scan = async (id: string) => {
-  const url = new URL(`/v1/qrcodes/${id}/scan`, QRCODE_BASE_URL).toString();
+  const url = new URL(`/qrcodes/${id}/scan`, QRCODE_BASE_URL).toString();
   const response = await fetch(url, {
     headers: {
       client_app_id: QRCODE_CLIENTAPP_ID,
     },
   });
-
-  console.log(response);
-
+  
   if (!response.ok) {
     throw new Error("Failed to scan QR code");
   }
-
-  const jsonText = await response.text();
-
-  const { data } = JSON.parse(jsonText)
-
+  
+  let data;
+  const text = await response.text();
+  console.log("Raw response:", text);
+  
+  try {
+    // Try parsing once
+    const parsed = JSON.parse(text);
+    
+    // Check if it's a string that needs another parse
+    if (typeof parsed === 'string') {
+      data = JSON.parse(parsed).data;
+    } else {
+      data = parsed.data;
+    }
+  } catch (err) {
+    console.error("Parse error:", err);
+    throw new Error("Failed to parse QR response");
+  }
+  
+  console.log("Final data:", data);
+  
   const response2 = await fetch(
     `${API_BASE_URL}/activities/${data.activity_id}/sign`,
     {
       headers: getHeaders(),
     }
   );
-
+  
   if (!response2.ok) {
     throw new Error("Failed to sign activity");
   }
-
+  
   const data2 = await response2.json();
   return data2;
 };
