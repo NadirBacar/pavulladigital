@@ -45,29 +45,30 @@ const scan = async (id: string, addLog: (log: string) => void) => {
 
   addLog("qrcode scanned successfully");
   if (!response.ok) {
-    addLog(await response.text())
     throw new Error("Failed to fetch activities");
   }
   addLog("qrcode scanned with no errors");
+    addLog(await response.text())
 
-  const { activity_id } = await response.json();
+    return ""
+  // const { activity_id } = await response.json();
 
-  const response2 = await fetch(
-    `${API_BASE_URL}/activities/${activity_id}/sign`,
-    {
-      headers: getHeaders(),
-    }
-  );
+  // const response2 = await fetch(
+  //   `${API_BASE_URL}/activities/${activity_id}/sign`,
+  //   {
+  //     headers: getHeaders(),
+  //   }
+  // );
 
-  addLog("well you didn't get here");
+  // addLog("well you didn't get here");
 
-  if (!response2.ok) {
-    throw new Error("Failed to fetch activities");
-  }
+  // if (!response2.ok) {
+  //   throw new Error("Failed to fetch activities");
+  // }
 
-  const data = await response2.json();
-  console.log(data);
-  return data;
+  // const data = await response2.json();
+  // console.log(data);
+  // return data;
 };
 
 const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
