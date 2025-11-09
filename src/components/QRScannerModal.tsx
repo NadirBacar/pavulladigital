@@ -96,6 +96,29 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       const code = detectQRCode(imageData);
 
+      // safe function
+      const extractQrUuid = (code: string) => {
+        if (!code) return null;
+        try {
+          const url = new URL(code); // throws if invalid
+          const parts = url.pathname.split("/").filter(Boolean); // ['v1', '<uuid>', 'scan']
+          const candidate = parts[1] ?? null; // index 1 when filtered
+          if (!candidate) return null;
+
+          // strict UUID v1-v5 pattern
+          const uuidRe =
+            /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
+          const m = candidate.match(uuidRe);
+          return m ? m[0] : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      // usage
+      const id = extractQrUuid(code);
+      console.log("qrcode id =", id);
+
       if (code) {
         setScannedData(code);
         setIsScanning(true);
@@ -117,7 +140,7 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
         addLog("Chamando onQRCodeDetected...");
         setDebugInfo(`Iniciando processamento da URL...`);
         try {
-          const result = await scanIt(code);
+          const result = await scanIt(id);
           addLog("Sucesso! Resultado recebido");
           setProcessingResult(result);
           setDebugInfo(`Processamento concluído!`);
