@@ -1,13 +1,38 @@
 "use client";
 import { QrCode, X, AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { scanQRCode as scanIt } from "@/lib/api";
 import jsQR from "jsqr";
 
 interface QRScannerModalProps {
   onClose: () => void;
   // onQRCodeDetected: (url: string) => Promise<any>;
 }
+const API_BASE_URL = "https://api.cursoapp.pavulla.com/api";
+
+const QRCODE_BASE_URL = "https://qrcode.pavulla.com/v1";
+
+const QRCODE_CLIENTAPP_ID = "5ccc98c1-002c-417d-9df6-8977a997dcbd";
+
+// Get auth token from localStorage
+const getAuthToken = () => {
+  return localStorage.getItem("auth_token");
+};
+
+// Common headers
+const getHeaders = (includeAuth = true) => {
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+
+  if (includeAuth) {
+    const token = getAuthToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
+  return headers;
+};
 
 const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -28,6 +53,41 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
     ]);
   };
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const scan = async (id: string, addLog: (log: string) => void) => {
+    const url = new URL(`/qrcodes/${id}/scan`, QRCODE_BASE_URL).toString();
+    addLog(`URL from constructor: ${url}`);
+    const response = await fetch(url, {
+      headers: {
+        client_app_id: QRCODE_CLIENTAPP_ID,
+      },
+    });
+
+    addLog("qrcode scanned successfully");
+    if (!response.ok) {
+      throw new Error("Failed to fetch activities");
+    }
+    addLog("qrcode scanned with no errors");
+
+    const { activity_id } = await response.json();
+
+    const response2 = await fetch(
+      `${API_BASE_URL}/activities/${activity_id}/sign`,
+      {
+        headers: getHeaders(),
+      }
+    );
+
+    addLog("well you didn't get here");
+
+    if (!response2.ok) {
+      throw new Error("Failed to fetch activities");
+    }
+
+    const data = await response2.json();
+    console.log(data);
+    return data;
+  };
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -102,17 +162,17 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
         try {
           const url = new URL(code); // throws if invalid
           const parts = url.pathname.split("/").filter(Boolean); // ['v1', '<uuid>', 'scan']
-          addLog(""+parts)
-          const candidate = parts[2] ?? null; 
-          return candidate
+          addLog("" + parts);
+          const candidate = parts[2] ?? null;
+          return candidate;
         } catch (e) {
           return null;
         }
-      }
+      };
 
       // usage
       const id = extractQrUuid(link);
-      addLog("qrcode id ="+ id);
+      addLog("qrcode id =" + id);
 
       if (id) {
         setScannedData(id);
@@ -135,7 +195,7 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
         addLog("Chamando onQRCodeDetected...");
         setDebugInfo(`Iniciando processamento da URL...`);
         try {
-          const result = await scanIt(id, addLog);
+          const result = await scan(id, addLog);
           addLog("Sucesso! Resultado recebido");
           setProcessingResult(result);
           setDebugInfo(`Processamento concluído!`);
@@ -178,7 +238,7 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
         videoStream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [scanIt]);
+  }, [scan]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
