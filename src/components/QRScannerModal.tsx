@@ -34,26 +34,6 @@ const getHeaders = (includeAuth = true) => {
   return headers;
 };
 
-const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [hasCamera, setHasCamera] = useState(true);
-  const [isScanning, setIsScanning] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [scannedData, setScannedData] = useState<string | null>(null);
-  const [processingResult, setProcessingResult] = useState<any>(null);
-  const [debugInfo, setDebugInfo] = useState<string>("");
-  const [error, setError] = useState<string | null>(null);
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
-
-  const addLog = (message: string) => {
-    setDebugLogs((prev) => [
-      ...prev,
-      `${new Date().toLocaleTimeString()}: ${message}`,
-    ]);
-  };
-  const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
   const scan = async (id: string, addLog: (log: string) => void) => {
     const url = new URL(`/qrcodes/${id}/scan`, QRCODE_BASE_URL).toString();
     addLog(`URL from constructor: ${url}`);
@@ -88,6 +68,26 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
     console.log(data);
     return data;
   };
+
+const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [hasCamera, setHasCamera] = useState(true);
+  const [isScanning, setIsScanning] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [scannedData, setScannedData] = useState<string | null>(null);
+  const [processingResult, setProcessingResult] = useState<any>(null);
+  const [debugInfo, setDebugInfo] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+
+  const addLog = (message: string) => {
+    setDebugLogs((prev) => [
+      ...prev,
+      `${new Date().toLocaleTimeString()}: ${message}`,
+    ]);
+  };
+  const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
