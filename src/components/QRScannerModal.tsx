@@ -94,7 +94,7 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
       context.restore();
 
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-      const code = detectQRCode(imageData);
+      const link = detectQRCode(imageData);
 
       // safe function
       const extractQrUuid = (code: string) => {
@@ -116,15 +116,15 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
       }
 
       // usage
-      const id = extractQrUuid(code);
-      console.log("qrcode id =", id);
+      const id = extractQrUuid(link);
+      addLog("qrcode id ="+ id);
 
-      if (code) {
-        setScannedData(code);
+      if (id) {
+        setScannedData(id);
         setIsScanning(true);
-        addLog(`QR detectado: ${code.substring(0, 50)}...`);
+        addLog(`QR detectado: ${id.substring(0, 50)}...`);
         setDebugInfo(`QR Code detectado`);
-        console.log("QR Code URL:", code);
+        console.log("QR Code URL:", id);
 
         if (scanIntervalRef.current) {
           clearInterval(scanIntervalRef.current);
