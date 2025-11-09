@@ -103,7 +103,7 @@ const ActivityDetails = () => {
       if (!token) return;
 
       const API_BASE_URL =
-        import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+        import.meta.env.VITE_API_URL || "https://api.cursoapp.pavulla.com/api";
       const baseHost = API_BASE_URL.replace(/\/api$/, "");
       const newBlobUrls = new Map<string, string>();
 
@@ -257,7 +257,7 @@ const ActivityDetails = () => {
 
       const token = localStorage.getItem("auth_token");
       const API_BASE_URL =
-        import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+        import.meta.env.VITE_API_URL || "https://api.cursoapp.pavulla.com/api";
 
       const response = await fetch(
         `${API_BASE_URL}/memories/${memoryId}/comment`,
