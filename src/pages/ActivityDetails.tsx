@@ -12,6 +12,9 @@ import {
   Mic,
   MessageCircle,
   Send,
+  FileText,
+  Download,
+  Loader,
 } from "lucide-react";
 import Header from "@/components/Header";
 import {
@@ -22,6 +25,7 @@ import {
   ApiMemory,
 } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { compressFile } from "@/lib/fileCompression";
 
 const ActivityDetails = () => {
   const { activityId } = useParams<{ activityId: string }>();
@@ -32,6 +36,7 @@ const ActivityDetails = () => {
   const [activity, setActivity] = useState<ApiActivity | null>(null);
   const [memories, setMemories] = useState<ApiMemory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingFile, setLoadingFile] = useState(true);
   const [showAddMemory, setShowAddMemory] = useState(false);
   const [newMemoryText, setNewMemoryText] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -143,30 +148,71 @@ const ActivityDetails = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
+    try {
+      // Show loading toast
+      setLoadingFile(true);
       toast({
-        title: "Arquivo muito grande",
-        description: "O arquivo deve ter no máximo 10MB.",
+        title: "Processando arquivo...",
+        description: "Por favor, aguarde enquanto otimizamos o arquivo.",
+      });
+
+      // Compress file if needed
+      const compressedFile = await compressFile(file, 100); // Leave some margin
+
+      const sizeMB = compressedFile.size / 1024 / 1024;
+
+      if (sizeMB > 100) {
+        toast({
+          title: "Arquivo muito grande",
+          description: `O arquivo ainda está muito grande (${sizeMB.toFixed(
+            2
+          )}MB). Por favor, escolha um arquivo menor.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSelectedFile(compressedFile);
+
+      if (compressedFile.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFilePreview(reader.result as string);
+        };
+        reader.readAsDataURL(compressedFile);
+      } else {
+        setFilePreview(null);
+      }
+
+      // Show success message if compression occurred
+      if (compressedFile.size < file.size) {
+        const originalSizeMB = file.size / 1024 / 1024;
+        toast({
+          title: "Arquivo otimizado!",
+          description: `Tamanho reduzido de ${originalSizeMB.toFixed(
+            2
+          )}MB para ${sizeMB.toFixed(2)}MB.`,
+        });
+      }else{
+        toast({
+          title: "Arquivo Nao otimizado!",
+          description: "O arquivo sera enviado com o tamanho original",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error processing file:", error);
+      toast({
+        title: "Erro ao processar arquivo",
+        description:
+          error.message || "Tente novamente com um arquivo diferente.",
         variant: "destructive",
       });
-      return;
     }
-
-    setSelectedFile(file);
-
-    if (file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFilePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setFilePreview(null);
-    }
+    setLoadingFile(false);
   };
 
   const handleRemoveFile = () => {
@@ -211,7 +257,7 @@ const ActivityDetails = () => {
         title: "Sucesso!",
         description: "Memória adicionada com sucesso.",
       });
-      window.location.reload()
+      window.location.reload();
     } catch (error: any) {
       console.error("Error creating memory:", error);
       toast({
@@ -300,7 +346,7 @@ const ActivityDetails = () => {
         title: "Sucesso!",
         description: "Comentário adicionado com sucesso.",
       });
-      window.location.reload()
+      window.location.reload();
     } catch (error: any) {
       console.error("Error creating comment:", error);
       toast({
@@ -338,7 +384,7 @@ const ActivityDetails = () => {
           />
         );
 
-      case "document":
+      case "video":
         return (
           <video controls className="w-full rounded-xl mb-3" preload="metadata">
             <source src={fileUrl} />
@@ -356,6 +402,31 @@ const ActivityDetails = () => {
           </div>
         );
 
+      case "document":
+        // For document types, provide a download button
+        const fileName = memory.file_url.split("/").pop() || "documento";
+        return (
+          <div className="bg-gray-100 rounded-xl p-4 mb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FileText className="w-8 h-8 text-gray-600" />
+                <div>
+                  <p className="font-medium text-gray-800">Documento anexado</p>
+                  <p className="text-sm text-gray-600">{fileName}</p>
+                </div>
+              </div>
+              <a
+                href={fileUrl}
+                download={fileName}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition"
+              >
+                <Download className="w-4 h-4" />
+                <span className="text-sm font-medium">Baixar</span>
+              </a>
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -370,6 +441,14 @@ const ActivityDetails = () => {
       return <Video className="w-5 h-5" />;
     if (selectedFile.type.startsWith("audio/"))
       return <Mic className="w-5 h-5" />;
+    if (
+      selectedFile.type.includes("pdf") ||
+      selectedFile.type.includes("document") ||
+      selectedFile.type.includes("text") ||
+      selectedFile.type.includes("zip") ||
+      selectedFile.type.includes("rar")
+    )
+      return <FileText className="w-5 h-5" />;
 
     return <Upload className="w-5 h-5" />;
   };
@@ -492,8 +571,14 @@ const ActivityDetails = () => {
             )}
 
             {selectedFile && !selectedFile.type.startsWith("image/") && (
-              <div className="bg-gray-100 rounded-xl p-4 mb-3 flex items-center justify-between">
+              <div
+                className={`bg-gray-100 rounded-xl p-4 mb-3 flex items-center justify-between ${
+                  loadingFile ? "animate-pulse" : ""
+                }`}
+                style={loadingFile ? { animationDuration: "800ms" } : undefined}
+              >
                 <div className="flex items-center gap-3">
+                  {loadingFile && "Processando"}
                   {getFileIcon()}
                   <div>
                     <p className="font-medium text-gray-800">
@@ -516,7 +601,7 @@ const ActivityDetails = () => {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*,video/*,audio/*"
+              accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.rar"
               onChange={handleFileChange}
               className="hidden"
             />
@@ -620,16 +705,6 @@ const ActivityDetails = () => {
                                       <span className="font-semibold text-sm text-gray-800">
                                         {comment.user?.full_name || "Usuário"}
                                       </span>
-                                      {/* <span className="text-xs text-gray-500">
-                                        {new Date(
-                                          comment.created_at
-                                        ).toLocaleString("pt-PT", {
-                                          day: "2-digit",
-                                          month: "2-digit",
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                        })}
-                                      </span> */}
                                     </div>
                                     <p className="text-sm text-gray-700">
                                       {comment.comment}

@@ -63,7 +63,7 @@ export interface ApiMemory {
   user_id: string;
   user_name: string;
   content_text: string | null;
-  content_type: "text" | "image" | "document" | "recording";
+  content_type: "text" | "image" | "document" | "recording" | "video";
   file_url: string | null;
   created_at: string;
   comments?: ApiComment[]; // Add this line
