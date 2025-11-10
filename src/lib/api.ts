@@ -196,7 +196,7 @@ export const createActivity = async (
   start_time: string;
   end_time: string;
   created_at: string;
-  qr_code_preview_url?: string;
+  qr_code_id?: string;
 }> => {
   const response = await fetch(`${API_BASE_URL}/activities/`, {
     method: "POST",
@@ -214,7 +214,19 @@ export const createActivity = async (
     const error = await response.json();
     throw new Error(error.error || "Failed to create activity");
   }
-  let previewUrl: string;
+  
+      const extractQrUuid = (code: string) => {
+        if (!code) return null;
+        try {
+          const url = new URL(code);
+          const parts = url.pathname.split("/").filter(Boolean);
+          const candidate = parts[2] ?? null;
+          return candidate;
+        } catch (e) {
+          return null;
+        }
+      };
+  let code_id: string;
 
   const activity: ApiActivity = await response.json();
 
@@ -242,7 +254,8 @@ export const createActivity = async (
     if (qrResponse.ok) {
       const qrData = await qrResponse.json();
       // Convert scan URL to preview URL
-      previewUrl = qrData.ScanUrl.replace("/scan", "/preview");
+      const previewUrl = qrData.ScanUrl.replace("/scan", "/preview");
+      code_id = extractQrUuid(previewUrl)
     } else {
       console.error("Failed to create QR code:", await qrResponse.text());
     }
@@ -259,7 +272,7 @@ export const createActivity = async (
     start_time: activity.start_time,
     end_time: activity.end_time,
     created_at: activity.created_at,
-    qr_code_preview_url: previewUrl,
+    qr_code_id: code_id,
   };
 };
 

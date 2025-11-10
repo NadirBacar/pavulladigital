@@ -16,6 +16,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createActivity } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
+const QRCODE_BASE_URL = "https://qrcode.pavulla.com/v1";
+const QRCODE_CLIENTAPP_ID = "5ccc98c1-002c-417d-9df6-8977a997dcbd";
+
 const CreateActivity = () => {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
@@ -29,7 +32,7 @@ const CreateActivity = () => {
     start_time: string;
     end_time: string;
     created_at: string;
-    qr_code_preview_url?: string;
+    qr_code_id?: string;
   } | null>(null);
   const [qrCodeImage, setQrCodeImage] = useState<string | null>(null);
   const [loadingQR, setLoadingQR] = useState(false);
@@ -44,15 +47,17 @@ const CreateActivity = () => {
 
   // Fetch QR code image when activity is created
   useEffect(() => {
-    if (createdActivity?.qr_code_preview_url) {
-      fetchQRCode(createdActivity.qr_code_preview_url);
+    if (createdActivity?.qr_code_id) {
+      fetchQRCode(createdActivity.qr_code_id);
     }
   }, [createdActivity]);
 
-  const fetchQRCode = async (previewUrl: string) => {
+  const fetchQRCode = async (code_id: string) => {
     setLoadingQR(true);
     try {
-      const response = await fetch(previewUrl);
+      const url = new URL(`/v1/qrcodes/${code_id}/preview`, QRCODE_BASE_URL).toString();
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
