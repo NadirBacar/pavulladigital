@@ -39,37 +39,37 @@ const scan = async (id: string) => {
       client_app_id: QRCODE_CLIENTAPP_ID,
     },
   });
-  
+
   if (!response.ok) {
     throw new Error("Failed to scan QR code");
   }
-  
+
   const text = await response.text();
   console.log("Raw response:", text);
-  
+
   // Find the end of the first JSON object
   let braceCount = 0;
   let firstJsonEnd = -1;
-  
+
   for (let i = 0; i < text.length; i++) {
-    if (text[i] === '{') braceCount++;
-    if (text[i] === '}') braceCount--;
-    
-    if (braceCount === 0 && text[i] === '}') {
+    if (text[i] === "{") braceCount++;
+    if (text[i] === "}") braceCount--;
+
+    if (braceCount === 0 && text[i] === "}") {
       firstJsonEnd = i + 1;
       break;
     }
   }
-  
+
   // Extract only the first JSON object
   const firstJson = text.substring(0, firstJsonEnd);
   console.log("First JSON:", firstJson);
-  
+
   const parsed = JSON.parse(firstJson);
   const { data } = parsed;
-  
+
   console.log("Parsed data:", data);
-  
+
   const response2 = await fetch(
     `${API_BASE_URL}/activities/${data.activity_id}/sign`,
     {
@@ -77,11 +77,11 @@ const scan = async (id: string) => {
       headers: getHeaders(),
     }
   );
-  
+
   if (!response2.ok) {
     throw new Error("Failed to sign activity");
   }
-  
+
   const data2 = await response2.json();
   return data2;
 };
@@ -105,8 +105,8 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: "environment",
-            width: { ideal: 720 },
-            height: { ideal: 1280 },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
           },
         });
 
@@ -141,20 +141,12 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
 
       if (!context || video.readyState !== video.HAVE_ENOUGH_DATA) return;
 
-      canvas.width = video.videoHeight;
-      canvas.height = video.videoWidth;
+      // Set canvas to match video dimensions (no rotation needed in canvas)
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-      context.save();
-      context.translate(canvas.width / 2, canvas.height / 2);
-      context.rotate((90 * Math.PI) / 180);
-      context.drawImage(
-        video,
-        -video.videoWidth / 2,
-        -video.videoHeight / 2,
-        video.videoWidth,
-        video.videoHeight
-      );
-      context.restore();
+      // Draw video directly without rotation
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       const link = detectQRCode(imageData);
@@ -244,7 +236,7 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
               muted
               className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto"
               style={{
-                transform: "translate(-50%, -50%) rotate(90deg)",
+                transform: "translate(-50%, -50%)",
                 objectFit: "cover",
               }}
             />
