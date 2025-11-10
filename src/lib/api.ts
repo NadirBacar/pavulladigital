@@ -325,11 +325,11 @@ export const createMemory = async (
     if (file.type.startsWith("image/")) {
       formData.append("content_type", "image");
     } else if (file.type.startsWith("video/")) {
-      formData.append("content_type", "document");
+      formData.append("content_type", "video");
     } else if (file.type.startsWith("audio/")) {
       formData.append("content_type", "recording");
     } else {
-      formData.append("content_type", "text");
+      formData.append("content_type", "document");
     }
   } else {
     formData.append("content_type", "text");
