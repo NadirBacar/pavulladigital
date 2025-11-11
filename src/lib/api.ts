@@ -147,38 +147,33 @@ export const fetchActivities = async (): Promise<ApiActivity[]> => {
   return data.activities || [];
 };
 
-export const scanQRCode = async (id: string, addLog: (log: string) => void) => {
-  const url = new URL(`/qrcodes/${id}/scan`, QRCODE_BASE_URL).toString();
-  addLog(`URL from constructor: ${url}`);
+export const scanQRCode = async (id: string) => {
+  const url = new URL(`/v1/qrcodes/${id}/scan`, QRCODE_BASE_URL).toString();
   const response = await fetch(url, {
     headers: {
       client_app_id: QRCODE_CLIENTAPP_ID,
     },
   });
 
-  addLog("qrcode scanned successfully");
   if (!response.ok) {
     throw new Error("Failed to fetch activities");
   }
-  addLog("qrcode scanned with no errors");
 
-  const { activity_id } = await response.json();
+  const { data } = await response.json();
 
   const response2 = await fetch(
-    `${API_BASE_URL}/activities/${activity_id}/sign`,
+    `${API_BASE_URL}/activities/${data.activity_id}/sign`,
     {
       headers: getHeaders(),
     }
   );
 
-  addLog("well you didn't get here");
-
   if (!response2.ok) {
     throw new Error("Failed to fetch activities");
   }
 
-  const data = await response2.json();
-  console.log(data);
+  const final = await response2.json();
+  console.log(final);
   return data;
 };
 

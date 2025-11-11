@@ -1,7 +1,7 @@
-"use client";
-import { QrCode, X, AlertCircle, Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import jsQR from "jsqr";
+"use client"
+import { AlertCircle, Loader2, QrCode, X } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import jsQR from "jsqr"
 
 interface QRScannerModalProps {
   onClose: () => void;
@@ -98,7 +98,7 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    let stream: MediaStream | null = null;
+    let stream: MediaStream | null = null
 
     const startCamera = async () => {
       try {
@@ -111,26 +111,23 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
         });
 
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.playsInline = true;
-
+          videoRef.current.srcObject = stream
           videoRef.current.onloadedmetadata = () => {
             videoRef.current?.play();
             startScanning();
           };
         }
       } catch (error) {
-        console.error("Error accessing camera:", error);
-        setHasCamera(false);
-        setError(`Erro ao acessar câmera: ${error}`);
+        console.error("Error accessing camera:", error)
+        setHasCamera(false)
       }
-    };
+    }
 
     const startScanning = () => {
       scanIntervalRef.current = setInterval(() => {
-        scanQRCode();
-      }, 500);
-    };
+        scanQRCode()
+      }, 500) // Scan every 500ms
+    }
 
     const scanQRCode = async () => {
       if (!videoRef.current || !canvasRef.current) return;
@@ -170,7 +167,7 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
         setIsScanning(true);
 
         if (scanIntervalRef.current) {
-          clearInterval(scanIntervalRef.current);
+          clearInterval(scanIntervalRef.current)
         }
 
         if (stream) {
@@ -192,47 +189,53 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
     };
 
     const detectQRCode = (imageData: ImageData): string | null => {
+      // IMPORTANT: Install jsQR first: npm install jsqr
+      // Then uncomment the code below and add this import at the top:
+      // import jsQR from "jsqr"
+      
+      
       const code = jsQR(imageData.data, imageData.width, imageData.height, {
         inversionAttempts: "dontInvert",
-      });
-      return code?.data || null;
-    };
+      })
+      return code?.data || null
+      
+      
+      // Remove this line after implementing jsQR:
+      return null
+    }
 
-    startCamera();
+    startCamera()
 
     return () => {
       if (scanIntervalRef.current) {
-        clearInterval(scanIntervalRef.current);
+        clearInterval(scanIntervalRef.current)
       }
       if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
+        stream.getTracks().forEach((track) => track.stop())
       }
       if (videoRef.current && videoRef.current.srcObject) {
-        const videoStream = videoRef.current.srcObject as MediaStream;
-        videoStream.getTracks().forEach((track) => track.stop());
+        const videoStream = videoRef.current.srcObject as MediaStream
+        videoStream.getTracks().forEach((track) => track.stop())
       }
     };
   }, []);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-3xl p-6 max-w-md w-full">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-gray-800">Escanear QR Code</h3>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition">
             <X className="w-5 h-5 text-gray-600" />
           </button>
         </div>
-
+        
         {hasCamera ? (
-          <div className="relative w-full h-64 bg-gray-900 rounded-2xl overflow-hidden">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
+          <div className="relative">
+            <video 
+              ref={videoRef} 
+              autoPlay 
+              playsInline 
               muted
               className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto"
               style={{
@@ -241,13 +244,13 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
               }}
             />
             <canvas ref={canvasRef} className="hidden" />
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="w-48 h-48 border-4 border-green-500 rounded-2xl animate-pulse"></div>
             </div>
             {isScanning && (
               <div className="absolute inset-0 bg-green-500 bg-opacity-20 rounded-2xl flex items-center justify-center">
                 <div className="bg-white px-4 py-2 rounded-lg">
-                  <p className="text-green-600 font-semibold">✓ Detectado!</p>
+                  <p className="text-green-600 font-semibold">Escaneando...</p>
                 </div>
               </div>
             )}
@@ -290,18 +293,18 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
             ? "QR Code processado com sucesso"
             : "Aponte a câmera para o código QR"}
         </p>
-
+        
         <div className="space-y-3">
           <button
             onClick={onClose}
             className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition"
           >
-            {scannedData ? "Fechar" : "Cancelar"}
+            Cancelar
           </button>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default QRScannerModal;
+export default QRScannerModal
