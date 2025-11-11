@@ -1,44 +1,134 @@
 import { QuizQuestion } from '@/types';
 
+// Quiz Gestão Documental (com respostas variadas e equilibradas)
 export const questionBank: QuizQuestion[] = [
-  { question: "Qual é a missão da PAVULLA?", options: ["Vender mais produtos", "Tornar organizações flexíveis às demandas contemporâneas", "Expandir para outros países", "Treinar funcionários"], correct: 1 },
-  { question: "A visão da PAVULLA é:", options: ["Ser líder de mercado", "Ser referência em soluções que impulsionam inovação e excelência operacional em África", "Ter mais clientes", "Abrir filiais"], correct: 1 },
-  { question: "Qual destes é um valor da PAVULLA?", options: ["Lucro máximo", "Inovação", "Expansão rápida", "Competição"], correct: 1 },
-  { question: "O valor de Transparência da PAVULLA significa:", options: ["Mostrar tudo aos concorrentes", "Comunicação clara e honesta com stakeholders", "Revelar segredos", "Não ter privacidade"], correct: 1 },
-  { question: "Respeito pelo Outro é um valor que:", options: ["Valoriza apenas clientes", "Valoriza e respeita todos com quem trabalham", "Valoriza apenas gestores", "Não é importante"], correct: 1 },
-  { question: "Responsabilidade na PAVULLA significa:", options: ["Fazer o mínimo", "Compromisso com excelência e resultados", "Evitar riscos", "Delegar tudo"], correct: 1 },
-  { question: "O que é o Gorganize?", options: ["Um software de contabilidade", "Uma solução para gestão digital de documentos", "Um sistema de vendas", "Uma rede social"], correct: 1 },
-  { question: "O principal benefício do Gorganize é:", options: ["Aumentar o uso de papel", "Reduzir processos manuais e papel", "Criar mais arquivos", "Imprimir documentos"], correct: 1 },
-  { question: "Com o Gorganize você pode:", options: ["Apenas ler documentos", "Digitalizar, organizar e gerir documentos", "Apenas imprimir", "Apenas deletar arquivos"], correct: 1 },
-  { question: "O Gorganize ajuda empresas a:", options: ["Gastar mais com papel", "Ser mais sustentáveis e eficientes", "Contratar mais pessoas", "Aumentar espaço físico"], correct: 1 },
-  { question: "Gorganize significa:", options: ["Desorganização digital", "Organização digital eficiente", "Arquivo físico", "Papel tradicional"], correct: 1 },
-  { question: "O Gorganize permite:", options: ["Apenas salvar arquivos", "Busca rápida e acesso remoto a documentos", "Apenas deletar", "Apenas compartilhar"], correct: 1 },
-  { question: "Com Gorganize, os processos ficam:", options: ["Mais lentos", "Mais rápidos e organizados", "Mais complexos", "Inalterados"], correct: 1 },
-  { question: "Gorganize contribui para:", options: ["Mais burocracia", "Sustentabilidade ambiental", "Mais papel", "Mais impressões"], correct: 1 },
-  { question: "O que é o OLA?", options: ["Um sistema de email", "Plataforma de Comunicações em Massa", "Uma rede social", "Um app de música"], correct: 1 },
-  { question: "O OLA permite enviar:", options: ["Apenas cartas", "SMS e USSD", "Apenas emails", "Apenas WhatsApp"], correct: 1 },
-  { question: "O slogan do OLA é:", options: ["Comunicação básica", "Seu negócio mais próximo do cliente", "Envie mensagens", "Sistema simples"], correct: 1 },
-  { question: "Com o OLA você pode:", options: ["Apenas receber SMS", "Tornar interações mais personalizadas com clientes", "Apenas fazer ligações", "Apenas enviar emails"], correct: 1 },
-  { question: "OLA é ideal para:", options: ["Apenas grandes empresas", "Negócios que querem comunicação em massa eficiente", "Apenas governo", "Apenas ONGs"], correct: 1 },
-  { question: "O OLA utiliza:", options: ["Apenas internet", "SMS e USSD para alcance máximo", "Apenas chamadas", "Apenas emails"], correct: 1 },
-  { question: "O que é o Hakela?", options: ["Um banco digital", "Sistema de Gestão Inteligente de Facturas", "Uma loja online", "Um aplicativo de jogos"], correct: 1 },
-  { question: "Com o Hakela você pode:", options: ["Apenas ler facturas", "Criar, enviar e rastrear pagamentos em tempo real", "Apenas imprimir", "Apenas arquivar"], correct: 1 },
-  { question: "O Hakela integra com:", options: ["Apenas Excel", "Sistemas como SAP e Spring", "Apenas Word", "Apenas emails"], correct: 1 },
-  { question: "Hakela é descrito como:", options: ["Sistema básico", "Sistema completo para gestão de facturas empresariais", "App simples", "Ferramenta temporária"], correct: 1 },
-  { question: "O rastreamento no Hakela é:", options: ["Manual", "Em tempo real", "Semanal", "Mensal"], correct: 1 },
-  { question: "Hakela ajuda empresas a:", options: ["Perder facturas", "Gerir facturas de forma inteligente", "Atrasar pagamentos", "Complicar processos"], correct: 1 },
-  { question: "O que é o Kulpay?", options: ["Um banco", "Hub Unificado de Pagamentos", "Uma loja", "Um cartão de crédito"], correct: 1 },
-  { question: "O Kulpay permite:", options: ["Apenas pagar contas", "Unificar todas as carteiras numa única plataforma", "Apenas receber dinheiro", "Apenas transferir"], correct: 1 },
-  { question: "Com Kulpay você gere:", options: ["Apenas dinheiro físico", "Carteiras móveis, contas bancárias e cartões centralizadamente", "Apenas cartões", "Apenas contas"], correct: 1 },
-  { question: "Kulpay é uma aplicação:", options: ["Web apenas", "Mobile", "Desktop apenas", "Não é app"], correct: 1 },
-  { question: "O principal benefício do Kulpay é:", options: ["Ter várias apps", "Centralização de pagamentos", "Apenas segurança", "Apenas velocidade"], correct: 1 },
-  { question: "O que é o Knomi?", options: ["Um sistema de câmeras", "Reconhecimento facial com IA", "Um filtro de fotos", "Uma rede social"], correct: 1 },
-  { question: "Knomi oferece:", options: ["Apenas fotos", "Solução KYC Completa", "Apenas vídeos", "Apenas edição"], correct: 1 },
-  { question: "O que significa KYC?", options: ["Know Your Camera", "Know Your Customer (Conheça seu Cliente)", "Keep Your Cash", "Keep Your Card"], correct: 1 },
-  { question: "Knomi utiliza:", options: ["Apenas câmera básica", "Reconhecimento facial e validação de documentos", "Apenas GPS", "Apenas internet"], correct: 1 },
-  { question: "O Knomi verifica:", options: ["Apenas idade", "Identidade com tecnologia avançada", "Apenas nome", "Apenas endereço"], correct: 1 },
-  { question: "Knomi inclui:", options: ["Apenas fotos", "OCR e verificação de vivacidade", "Apenas formulários", "Apenas assinaturas"], correct: 1 },
-  { question: "A tecnologia do Knomi é:", options: ["Básica", "Avançada com IA", "Manual", "Simples"], correct: 1 },
-  { question: "Qual é o slogan da PAVULLA?", options: ["Digital. Local. Inovador.", "Confiável. Digital. Local.", "Rápido. Eficiente. Seguro.", "Tecnologia. Futuro."], correct: 1 },
-  { question: "Quantos produtos principais a PAVULLA oferece?", options: ["3 produtos", "5 produtos", "7 produtos", "10 produtos"], correct: 1 },
+  // 1. O Documento Digital como Prova
+  { 
+    question: "Qual dos atributos essenciais do documento digital garante que ele é uma representação completa e precisa das transações ou factos de que testemunha?", 
+    options: ["Usabilidade", "Autenticidade", "Integridade", "Fiabilidade"], 
+    correct: 3 
+  },
+  { 
+    question: "O que é exigido para garantir a Integridade de um documento digital, conforme a ISO 15489?", 
+    options: [
+      "Apenas a atribuição de um título e autor", 
+      "Mecanismos de segurança como hash ou assinatura digital para detetar alterações",
+      "Apenas o controlo de acesso", 
+      "A sua transferência imediata para um Repositório Digital Confiável (RDC)"
+    ], 
+    correct: 1 
+  },
+
+  // 2. Normas Internacionais e Aplicação
+  { 
+    question: "Qual norma internacional estabelece os princípios e requisitos para o programa de gestão de documentos de uma organização?", 
+    options: ["MoReq", "OAIS (ISO 14721)", "NDSA Levels", "ISO 15489"], 
+    correct: 3 
+  },
+  { 
+    question: "O MoReq (Model Requirements for the Management of Electronic Records) é mais utilizado para qual finalidade?", 
+    options: [
+      "Orientar a conceção, avaliação e aquisição de Sistemas Informatizados de Gestão para Documentos de Arquivo (SIGAD)",
+      "Certificação de Repositórios Digitais Confiáveis", 
+      "Definição do Ciclo de Vida do Documento", 
+      "Definir os padrões de metadados de preservação"
+    ], 
+    correct: 0 
+  },
+  { 
+    question: "O modelo OAIS (ISO 14721) define três tipos de Pacotes de Informação. Qual pacote é mantido no arquivo, contendo o objeto digital e os metadados de preservação?", 
+    options: [
+      "SIP (Submission Information Package)", 
+      "AIP (Archival Information Package)", 
+      "DIP (Dissemination Information Package)", 
+      "PIP (Preservation Information Package)"
+    ], 
+    correct: 1 
+  },
+
+  // 3. Ciclo de Vida e Instrumentos
+  { 
+    question: "No Ciclo de Vida do Documento Digital, a atribuição imediata de um identificador único, metadados e classificação ocorre em qual fase?", 
+    options: ["Uso e Manutenção", "Avaliação", "Criação e Captura", "Destinação Final"], 
+    correct: 2 
+  },
+  { 
+    question: "Qual instrumento de gestão arquivística é automatizado no SIGAD para calcular e exibir o prazo de guarda e a data de destinação final do documento?", 
+    options: [
+      "Plano de Classificação (PC)", 
+      "Registo de Auditoria (Audit Trail)", 
+      "Política de Metadados",
+      "Tabela de Avaliação (TA) ou TTD"
+    ], 
+    correct: 3 
+  },
+
+  // 4. Modelos de Maturidade e Preservação
+  { 
+    question: "Qual modelo de maturidade foca-se numa visão holística da gestão e preservação de dados digitais ao longo de todo o seu ciclo de vida, enfatizando a curadoria contínua?", 
+    options: [
+      "DCC (Digital Curation Centre) Lifecycle Model",
+      "NDSA Levels of Digital Preservation", 
+      "ISO 16363", 
+      "MoReq"
+    ], 
+    correct: 0 
+  },
+  { 
+    question: "Os NDSA Levels of Digital Preservation ajudam as instituições a avaliar suas capacidades em cinco áreas funcionais. Qual das seguintes áreas é uma das cinco áreas funcionais do NDSA?", 
+    options: [
+      "Autenticidade e Fiabilidade", 
+      "Armazenamento e Localização Geográfica", 
+      "Gestão do Plano de Classificação", 
+      "Workflow de Destinação"
+    ], 
+    correct: 1 
+  },
+  { 
+    question: "A ISO 16363 formaliza os critérios para a auditoria e certificação de que tipo de entidade?", 
+    options: [
+      "Sistemas Informatizados de Gestão para Documentos de Arquivo (SIGAD)", 
+      "Serviços de Digitalização", 
+      "Repositórios Digitais Confiáveis (RDC)", 
+      "Programas de Gestão de Documentos"
+    ], 
+    correct: 2 
+  },
+
+  // 5. Padrões de Metadados
+  { 
+    question: "Qual padrão de metadados é considerado o mais importante para a preservação digital, focando-se na proveniência, integridade, direitos e eventos de preservação?", 
+    options: ["Dublin Core (DC)", "METS", "EAD", "PREMIS"], 
+    correct: 3 
+  },
+  { 
+    question: "Qual padrão de metadados é utilizado para agregar e organizar os diferentes tipos de metadados (descritivos, administrativos e de preservação) num único pacote para transferência (SIP/AIP)?", 
+    options: [
+      "METS (Metadata Encoding and Transmission Standard)",
+      "Dublin Core", 
+      "PREMIS", 
+      "MODS"
+    ], 
+    correct: 0 
+  },
+  { 
+    question: "No processo de digitalização, a captura de metadados como a resolução (dpi) e o formato de ficheiro (TIFF) é essencial. Estes são classificados como que tipo de metadados?", 
+    options: ["Descritivos", "Técnicos/Administrativos", "Contextuais", "Estruturais"], 
+    correct: 1 
+  },
+  { 
+    question: "A falha em manter um Registo de Auditoria (Audit Trail) inalterável no SIGAD compromete diretamente qual atributo essencial do documento digital?", 
+    options: ["Usabilidade", "Fiabilidade", "Integridade", "Acessibilidade"], 
+    correct: 2 
+  },
+  { 
+    question: "Qual dos seguintes cenários reflete uma falha na aplicação do princípio da Classificação e Avaliação Precoce no ambiente digital?", 
+    options: [
+      "O SIGAD não permite a pesquisa por metadados", 
+      "O documento digital não possui assinatura digital", 
+      "O documento é armazenado em formato proprietário",
+      "O documento é capturado no SIGAD sem a atribuição obrigatória de um código do Plano de Classificação"
+    ], 
+    correct: 3 
+  },
 ];

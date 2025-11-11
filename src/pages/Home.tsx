@@ -3,7 +3,7 @@
 // src/pages/Home.tsx
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Calendar, Clock, QrCode, Trophy, Zap, Gift, ChevronRight, Users, UserPlus, CheckCircle2, CalendarPlus } from "lucide-react"
+import { Calendar, Clock, QrCode, Trophy, Zap, Gift, ChevronRight, Users, UserPlus, CheckCircle2, CalendarPlus, File } from "lucide-react"
 import BackgroundWithLogo from "@/components/BackgroundWithLogo"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
@@ -228,6 +228,21 @@ const Home = () => {
                   <div className="text-left">
                     <h3 className="text-lg font-bold">Gestão de Usuários</h3>
                     <p className="text-sm opacity-90">Gerenciar grupos</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-6 h-6 text-white opacity-70" />
+              </button>
+              <button
+                onClick={() => navigate("/documents")}
+                className="bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl p-6 shadow-elegant hover:shadow-glow transition-all transform hover:scale-105 flex items-center justify-between group text-white"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
+                    <File className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-lg font-bold">Gestão de Documentos</h3>
+                    <p className="text-sm opacity-90">Gerenciar Documentos</p>
                   </div>
                 </div>
                 <ChevronRight className="w-6 h-6 text-white opacity-70" />

@@ -2,9 +2,15 @@
 
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Camera, Upload, FileText, X, Eye, ArrowLeft } from "lucide-react"
+import { Camera, Upload, FileText, X, Eye, ArrowLeft, CheckCircle, XCircle, Clock } from "lucide-react"
 import BackgroundWithLogo from "@/components/BackgroundWithLogo"
 import Header from "@/components/Header"
+
+// Tipos de usuário
+type UserRole = "contabilista" | "contabilidade" | "recepcao" | "outros"
+
+// Status do documento
+type DocumentStatus = "pendente" | "aprovado" | "rejeitado"
 
 interface Document {
   id: string
@@ -12,12 +18,27 @@ interface Document {
   type: "photo" | "pdf"
   url: string
   date: Date
+  status: DocumentStatus
+  reviewedBy?: string
+  reviewedAt?: Date
+  rejectionReason?: string
 }
 
 const Documents = () => {
   const navigate = useNavigate()
   const [documents, setDocuments] = useState<Document[]>([])
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
+  const [showRejectModal, setShowRejectModal] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState("")
+  
+  // Simulação do usuário atual - em produção, isso viria de um contexto de autenticação
+  const [currentUser] = useState<{ name: string; role: UserRole }>({
+    name: "João Silva",
+    role: "contabilista" // Altere para "recepcao" ou "outros" para testar
+  })
+
+  // Verificar se o usuário pode aprovar/rejeitar
+  const canReviewDocuments = currentUser.role === "contabilista" || currentUser.role === "contabilidade" || currentUser.role === "recepcao"
 
   const handlePhotoCapture = () => {
     const input = document.createElement("input")
@@ -35,6 +56,7 @@ const Documents = () => {
           type: "photo",
           url,
           date: new Date(),
+          status: "pendente",
         }
         setDocuments((prev) => [newDoc, ...prev])
       }
@@ -58,12 +80,54 @@ const Documents = () => {
           type: "pdf",
           url,
           date: new Date(),
+          status: "pendente",
         }
         setDocuments((prev) => [newDoc, ...prev])
       }
     }
 
     input.click()
+  }
+
+  const handleApproveDocument = (docId: string) => {
+    setDocuments((prev) =>
+      prev.map((doc) =>
+        doc.id === docId
+          ? {
+              ...doc,
+              status: "aprovado",
+              reviewedBy: currentUser.name,
+              reviewedAt: new Date(),
+            }
+          : doc
+      )
+    )
+    setSelectedDocument(null)
+  }
+
+  const handleRejectDocument = () => {
+    if (!selectedDocument || !rejectionReason.trim()) {
+      alert("Por favor, forneça um motivo para a rejeição")
+      return
+    }
+
+    setDocuments((prev) =>
+      prev.map((doc) =>
+        doc.id === selectedDocument.id
+          ? {
+              ...doc,
+              status: "rejeitado",
+              reviewedBy: currentUser.name,
+              reviewedAt: new Date(),
+              rejectionReason: rejectionReason,
+            }
+          : doc
+      )
+    )
+    
+    setShowRejectModal(false)
+    setRejectionReason("")
+    setSelectedDocument(null)
   }
 
   const handleDeleteDocument = (id: string) => {
@@ -83,6 +147,57 @@ const Documents = () => {
     })
   }
 
+  const getStatusBadge = (status: DocumentStatus) => {
+    const badges = {
+      pendente: {
+        bg: "bg-yellow-100",
+        text: "text-yellow-700",
+        icon: Clock,
+        label: "Pendente",
+      },
+      aprovado: {
+        bg: "bg-green-100",
+        text: "text-green-700",
+        icon: CheckCircle,
+        label: "Aprovado",
+      },
+      rejeitado: {
+        bg: "bg-red-100",
+        text: "text-red-700",
+        icon: XCircle,
+        label: "Rejeitado",
+      },
+    }
+
+    const badge = badges[status]
+    const Icon = badge.icon
+
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${badge.bg} ${badge.text}`}>
+        <Icon className="w-3 h-3" />
+        {badge.label}
+      </span>
+    )
+  }
+
+  const getRoleLabel = (role: UserRole) => {
+    const roles = {
+      contabilista: "Contabilista",
+      contabilidade: "Contabilidade",
+      recepcao: "Recepção",
+      outros: "Outros",
+    }
+    return roles[role]
+  }
+
+  // Estatísticas dos documentos
+  const stats = {
+    total: documents.length,
+    pendente: documents.filter((d) => d.status === "pendente").length,
+    aprovado: documents.filter((d) => d.status === "aprovado").length,
+    rejeitado: documents.filter((d) => d.status === "rejeitado").length,
+  }
+
   return (
     <div className="min-h-screen bg-blue-50">
       <BackgroundWithLogo />
@@ -98,13 +213,43 @@ const Documents = () => {
           <span className="font-medium">Voltar</span>
         </button>
 
-        {/* Page Title */}
+        {/* Page Title with User Role */}
         <div className="mb-6">
           <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-5 shadow-elegant">
-            <h2 className="text-2xl font-bold text-gray-800">Documentos Fiscalizados</h2>
-            <p className="text-gray-600 text-sm mt-1">Gerencie seus documentos e fotos</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">Documentos Fiscalizados</h2>
+                <p className="text-gray-600 text-sm mt-1">Gerencie seus documentos e fotos</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-semibold text-gray-800">{currentUser.name}</p>
+                <p className="text-xs text-gray-500">{getRoleLabel(currentUser.role)}</p>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Statistics */}
+        {canReviewDocuments && documents.length > 0 && (
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            <div className="bg-white rounded-xl p-4 shadow-elegant text-center">
+              <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
+              <p className="text-xs text-gray-600 mt-1">Total</p>
+            </div>
+            <div className="bg-yellow-50 rounded-xl p-4 shadow-elegant text-center">
+              <p className="text-2xl font-bold text-yellow-700">{stats.pendente}</p>
+              <p className="text-xs text-yellow-600 mt-1">Pendentes</p>
+            </div>
+            <div className="bg-green-50 rounded-xl p-4 shadow-elegant text-center">
+              <p className="text-2xl font-bold text-green-700">{stats.aprovado}</p>
+              <p className="text-xs text-green-600 mt-1">Aprovados</p>
+            </div>
+            <div className="bg-red-50 rounded-xl p-4 shadow-elegant text-center">
+              <p className="text-2xl font-bold text-red-700">{stats.rejeitado}</p>
+              <p className="text-xs text-red-600 mt-1">Rejeitados</p>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons - 2x2 Grid on mobile */}
         <div className="grid grid-cols-2 gap-4 mb-6">
@@ -172,7 +317,15 @@ const Documents = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-800 truncate">{doc.name}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{formatDate(doc.date)}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-xs text-gray-500">{formatDate(doc.date)}</p>
+                        {getStatusBadge(doc.status)}
+                      </div>
+                      {doc.reviewedBy && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Revisado por {doc.reviewedBy}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -201,14 +354,27 @@ const Documents = () => {
       {/* Document Preview Modal */}
       {selectedDocument && (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="font-semibold text-gray-800">{selectedDocument.name}</h3>
-              <button onClick={() => setSelectedDocument(null)} className="p-2 hover:bg-gray-100 rounded-lg transition">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="p-4 border-b flex items-center justify-between flex-shrink-0">
+              <div className="flex-1 min-w-0 mr-4">
+                <h3 className="font-semibold text-gray-800 truncate">{selectedDocument.name}</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  {getStatusBadge(selectedDocument.status)}
+                  {selectedDocument.reviewedBy && (
+                    <span className="text-xs text-gray-500">
+                      por {selectedDocument.reviewedBy}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button onClick={() => setSelectedDocument(null)} className="p-2 hover:bg-gray-100 rounded-lg transition flex-shrink-0">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-4 overflow-auto max-h-[calc(90vh-80px)]">
+
+            {/* Document Content */}
+            <div className="p-4 overflow-auto flex-1">
               {selectedDocument.type === "photo" ? (
                 <img
                   src={selectedDocument.url || "/placeholder.svg"}
@@ -218,10 +384,74 @@ const Documents = () => {
               ) : (
                 <iframe
                   src={selectedDocument.url}
-                  className="w-full h-[70vh] rounded-lg"
+                  className="w-full h-[60vh] rounded-lg"
                   title={selectedDocument.name}
                 />
               )}
+
+              {/* Rejection Reason */}
+              {selectedDocument.status === "rejeitado" && selectedDocument.rejectionReason && (
+                <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-sm font-semibold text-red-800 mb-2">Motivo da Rejeição:</p>
+                  <p className="text-sm text-red-700">{selectedDocument.rejectionReason}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons for Contabilista/Contabilidade */}
+            {canReviewDocuments && selectedDocument.status === "pendente" && (
+              <div className="p-4 border-t bg-gray-50 flex gap-3 flex-shrink-0">
+                <button
+                  onClick={() => handleApproveDocument(selectedDocument.id)}
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-xl font-semibold transition flex items-center justify-center gap-2"
+                >
+                  <CheckCircle className="w-5 h-5" />
+                  Aprovar
+                </button>
+                <button
+                  onClick={() => setShowRejectModal(true)}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 px-4 rounded-xl font-semibold transition flex items-center justify-center gap-2"
+                >
+                  <XCircle className="w-5 h-5" />
+                  Rejeitar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Rejeitar Documento</h3>
+            <p className="text-sm text-gray-600 mb-4">Por favor, informe o motivo da rejeição:</p>
+            
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 text-sm resize-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              rows={4}
+              placeholder="Digite o motivo da rejeição..."
+            />
+
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => {
+                  setShowRejectModal(false)
+                  setRejectionReason("")
+                }}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 rounded-xl font-semibold transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleRejectDocument}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 px-4 rounded-xl font-semibold transition"
+              >
+                Confirmar Rejeição
+              </button>
             </div>
           </div>
         </div>
