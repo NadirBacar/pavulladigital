@@ -232,7 +232,7 @@ const Home = () => {
                 </div>
                 <ChevronRight className="w-6 h-6 text-white opacity-70" />
               </button>
-              <button
+              {/* <button
                 onClick={() => navigate("/documents")}
                 className="bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl p-6 shadow-elegant hover:shadow-glow transition-all transform hover:scale-105 flex items-center justify-between group text-white"
               >
@@ -246,7 +246,7 @@ const Home = () => {
                   </div>
                 </div>
                 <ChevronRight className="w-6 h-6 text-white opacity-70" />
-              </button>
+              </button> */}
             </>
           )}
         </div>

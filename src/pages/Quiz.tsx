@@ -1,10 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Clock, Gift, Award, CheckCircle, XCircle } from 'lucide-react';
+import { Trophy, Clock, Gift, Award, CheckCircle, XCircle, History, Star } from 'lucide-react';
 import BackgroundWithLogo from '@/components/BackgroundWithLogo';
 import Header from '@/components/Header';
 import { questionBank }  from '@/data/questions';
 import { QuizQuestion } from '@/types';
+
+interface QuizResult {
+  date: string;
+  score: number;
+  correctAnswers: number;
+  wrongAnswers: number;
+  timestamp: number;
+}
+
+const STORAGE_KEY = 'pavulla_quiz_results';
+const LAST_PLAY_KEY = 'pavulla_quiz_last_play';
 
 const Quiz = () => {
   const navigate = useNavigate();
@@ -15,7 +26,69 @@ const Quiz = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(60);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
-  const [hasPlayedToday, setHasPlayedToday] = useState(false);
+  const [quizHistory, setQuizHistory] = useState<QuizResult[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Função para carregar histórico do localStorage
+  const loadQuizHistory = () => {
+    try {
+      const savedHistory = localStorage.getItem(STORAGE_KEY);
+      if (savedHistory) {
+        const history: QuizResult[] = JSON.parse(savedHistory);
+        setQuizHistory(history.sort((a, b) => b.timestamp - a.timestamp));
+      }
+    } catch (error) {
+      console.error('Erro ao carregar histórico:', error);
+    }
+  };
+
+  // Função para salvar resultado no localStorage
+  const saveQuizResult = (correct: number, wrong: number) => {
+    try {
+      const today = new Date();
+      const newResult: QuizResult = {
+        date: today.toLocaleDateString('pt-BR'),
+        score: correct,
+        correctAnswers: correct,
+        wrongAnswers: wrong,
+        timestamp: today.getTime()
+      };
+
+      const savedHistory = localStorage.getItem(STORAGE_KEY);
+      const history: QuizResult[] = savedHistory ? JSON.parse(savedHistory) : [];
+      
+      history.push(newResult);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+      
+      setQuizHistory(history.sort((a, b) => b.timestamp - a.timestamp));
+    } catch (error) {
+      console.error('Erro ao salvar resultado:', error);
+    }
+  };
+
+  // Função para obter a melhor pontuação
+  const getBestScore = () => {
+    if (quizHistory.length === 0) return 0;
+    return Math.max(...quizHistory.map(result => result.score));
+  };
+
+  // Função para obter estatísticas
+  const getStats = () => {
+    if (quizHistory.length === 0) {
+      return { totalGames: 0, averageScore: 0, totalCorrect: 0, totalWrong: 0 };
+    }
+
+    const totalGames = quizHistory.length;
+    const totalCorrect = quizHistory.reduce((sum, result) => sum + result.correctAnswers, 0);
+    const totalWrong = quizHistory.reduce((sum, result) => sum + result.wrongAnswers, 0);
+    const averageScore = (totalCorrect / totalGames).toFixed(1);
+
+    return { totalGames, averageScore, totalCorrect, totalWrong };
+  };
+
+  useEffect(() => {
+    loadQuizHistory();
+  }, []);
 
   useEffect(() => {
     if (quizState === 'playing' && timeLeft > 0) {
@@ -27,10 +100,6 @@ const Quiz = () => {
   }, [timeLeft, quizState]);
 
   const startQuiz = () => {
-    if (hasPlayedToday) {
-      alert('Você já jogou hoje! Volte amanhã para uma nova tentativa.');
-      return;
-    }
     const shuffled = [...questionBank].sort(() => Math.random() - 0.5).slice(0, 5);
     setQuizQuestions(shuffled);
     setCurrentQuestionIndex(0);
@@ -49,8 +118,9 @@ const Quiz = () => {
       setSelectedAnswer(null);
       setTimeLeft(60);
     } else {
+      // Salvar resultado antes de mostrar a tela de resultado
+      saveQuizResult(correctAnswers, wrongAnswers);
       setQuizState('result');
-      setHasPlayedToday(true);
     }
   };
 
@@ -83,12 +153,15 @@ const Quiz = () => {
     return { message: "Continue tentando! Cada tentativa te deixa mais perto do prêmio! 🚀" };
   };
 
+  const stats = getStats();
+  const bestScore = getBestScore();
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-blue-100">
       <BackgroundWithLogo />
       <Header />
 
-      <div className="max-w-4xl mx-auto p-4 pb-24 relative z-10">
+      <div className="max-w-4xl mx-auto p-4 pb-24 relative z-10 ">
         {quizState === 'menu' && (
           <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-3xl p-8 shadow-glow text-center">
             <div className="w-24 h-24 mx-auto mb-6 gradient-quiz rounded-full flex items-center justify-center">
@@ -97,6 +170,22 @@ const Quiz = () => {
             <h2 className="text-3xl font-black text-gray-800 mb-4">Quiz PAVULLA</h2>
             <p className="text-gray-600 mb-6">Responda 5 perguntas e ganhe prêmios incríveis!</p>
             
+            {/* Estatísticas */}
+            {quizHistory.length > 0 && (
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="gradient-card rounded-xl p-4">
+                  <Star className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
+                  <p className="text-sm text-gray-600 mb-1">Melhor Pontuação</p>
+                  <p className="text-3xl font-black text-primary">{bestScore}/5</p>
+                </div>
+                <div className="gradient-card rounded-xl p-4">
+                  <History className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                  <p className="text-sm text-gray-600 mb-1">Total de Jogos</p>
+                  <p className="text-3xl font-black text-secondary">{stats.totalGames}</p>
+                </div>
+              </div>
+            )}
+
             <div className="gradient-card rounded-2xl p-6 mb-8">
               <h3 className="font-bold text-gray-800 mb-3 text-lg flex items-center justify-center gap-2">
                 <Gift className="w-6 h-6 text-secondary" />
@@ -113,27 +202,33 @@ const Quiz = () => {
                 </p>
                 <p className="flex items-center gap-2">
                   <span className="text-primary">✓</span>
-                  1 tentativa por dia
+                  Tentativas ilimitadas
                 </p>
-                <p className="flex items-center gap-2">
+                {/* <p className="flex items-center gap-2">
                   <span className="text-secondary">🎁</span>
                   Responda para habilitar brindes exclusivos!
-                </p>
+                </p> */}
               </div>
             </div>
 
             <div className="space-y-4">
               <button
                 onClick={startQuiz}
-                disabled={hasPlayedToday}
-                className={`w-full py-4 rounded-xl font-bold text-lg transition shadow-elegant ${
-                  hasPlayedToday
-                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                    : 'gradient-quiz text-white hover:opacity-90'
-                }`}
+                className="w-full py-4 rounded-xl font-bold text-lg transition shadow-elegant gradient-quiz text-white hover:opacity-90"
               >
-                {hasPlayedToday ? 'Você já jogou hoje' : 'Iniciar Quiz'}
+                Iniciar Quiz
               </button>
+              
+              {quizHistory.length > 0 && (
+                <button
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="w-full bg-blue-50 text-blue-700 py-3 rounded-xl font-semibold hover:bg-blue-100 transition flex items-center justify-center gap-2"
+                >
+                  <History className="w-5 h-5" />
+                  {showHistory ? 'Ocultar Histórico' : 'Ver Histórico'}
+                </button>
+              )}
+              
               <button
                 onClick={() => navigate('/home')}
                 className="w-full bg-muted text-gray-700 py-3 rounded-xl font-semibold hover:bg-muted/80 transition"
@@ -141,11 +236,115 @@ const Quiz = () => {
                 Voltar ao Menu
               </button>
             </div>
+
+            {/* Histórico de Pontuações */}
+            {showHistory && quizHistory.length > 0 && (
+              <div className="mt-6 bg-gray-50 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center justify-center gap-2">
+                  <History className="w-6 h-6 text-primary" />
+                  Histórico de Jogos
+                </h3>
+                
+                {/* Estatísticas gerais */}
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="bg-white rounded-lg p-3">
+                    <p className="text-xs text-gray-600 mb-1">Média</p>
+                    <p className="text-xl font-bold text-gray-800">{stats.averageScore}</p>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-600 mb-1">Acertos</p>
+                    <p className="text-xl font-bold text-green-600">{stats.totalCorrect}</p>
+                  </div>
+                  <div className="bg-red-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-600 mb-1">Erros</p>
+                    <p className="text-xl font-bold text-red-600">{stats.totalWrong}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {quizHistory.slice(0, 10).map((result, index) => (
+                    <div 
+                      key={result.timestamp}
+                      className={`bg-white rounded-lg p-4 ${
+                        result.score === bestScore ? 'border-2 border-yellow-400' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {result.score === bestScore && (
+                            <Star className="w-5 h-5 text-yellow-500" />
+                          )}
+                          <div className="text-left">
+                            <p className="text-sm font-semibold text-gray-800">{result.date}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xs text-green-600 flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" />
+                                {result.correctAnswers}
+                              </span>
+                              <span className="text-xs text-red-600 flex items-center gap-1">
+                                <XCircle className="w-3 h-3" />
+                                {result.wrongAnswers}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-black text-primary">{result.score}/5</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {quizHistory.length > 10 && (
+                  <p className="text-xs text-gray-500 mt-3">
+                    Mostrando os 10 resultados mais recentes de {quizHistory.length}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
         {quizState === 'playing' && quizQuestions[currentQuestionIndex] && (
           <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-3xl p-8 shadow-glow">
+            {/* Estatísticas do Usuário - Topo */}
+            {quizHistory.length > 0 && (
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-4 mb-6 border-2 border-purple-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-white rounded-full p-2">
+                      <Trophy className="w-6 h-6 text-yellow-500" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs text-gray-600 font-semibold">Seu Recorde</p>
+                      <p className="text-2xl font-black text-purple-600">{bestScore}/5</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-xs text-gray-600 font-semibold">Total de Jogos</p>
+                      <p className="text-xl font-bold text-blue-600">{stats.totalGames}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-600 font-semibold">Média</p>
+                      <p className="text-xl font-bold text-indigo-600">{stats.averageScore}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="bg-white rounded-lg px-3 py-2 flex items-center justify-between">
+                    <span className="text-xs text-gray-600 font-medium">Total Acertos</span>
+                    <span className="text-sm font-bold text-green-600">{stats.totalCorrect}</span>
+                  </div>
+                  <div className="bg-white rounded-lg px-3 py-2 flex items-center justify-between">
+                    <span className="text-xs text-gray-600 font-medium">Total Erros</span>
+                    <span className="text-sm font-bold text-red-600">{stats.totalWrong}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Cabeçalho com questão e placar */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -154,7 +353,7 @@ const Quiz = () => {
                 <span className="text-sm font-semibold text-gray-600">de 5</span>
               </div>
               
-              {/* Placar de Acertos e Erros */}
+              {/* Placar de Acertos e Erros - Jogo Atual */}
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-lg border-2 border-green-200">
                   <CheckCircle className="w-5 h-5 text-green-600" />
@@ -273,7 +472,19 @@ const Quiz = () => {
               <p className="text-3xl font-black text-gray-800">{correctAnswers}/5</p>
             </div>
 
-            <div className="gradient-card rounded-2xl p-8 mb-8">
+            {/* Mostrar se é novo recorde */}
+            {correctAnswers === bestScore && quizHistory.length > 1 && (
+              <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-3 mb-4 flex items-center justify-center gap-2">
+                <Star className="w-6 h-6 text-yellow-500" />
+                <p className="text-sm font-bold text-yellow-700">
+                  {correctAnswers > Math.max(...quizHistory.slice(0, -1).map(r => r.score)) 
+                    ? '🎉 Novo Recorde Pessoal!' 
+                    : '⭐ Igualou seu recorde!'}
+                </p>
+              </div>
+            )}
+
+            <div className="gradient-card rounded-2xl p-8 mb-6">
               {getPrize(correctAnswers).icon && (
                 <div className="text-6xl mb-4">{getPrize(correctAnswers).icon}</div>
               )}
@@ -287,16 +498,22 @@ const Quiz = () => {
               </p>
             </div>
 
-            <div className="bg-blue-50 rounded-xl p-4 mb-6">
-              <p className="text-sm text-gray-700">
-                ⏰ Próxima tentativa disponível amanhã
-              </p>
-            </div>
-
             <div className="space-y-3">
               <button
+                onClick={() => {
+                  setQuizState('menu');
+                  setCurrentQuestionIndex(0);
+                  setCorrectAnswers(0);
+                  setWrongAnswers(0);
+                  setSelectedAnswer(null);
+                }}
+                className="w-full gradient-quiz text-white py-4 rounded-xl font-bold text-lg hover:opacity-90 transition shadow-elegant"
+              >
+                🎮 Jogar Novamente
+              </button>
+              <button
                 onClick={() => navigate('/home')}
-                className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-xl font-semibold transition"
+                className="w-full bg-muted text-gray-700 py-3 rounded-xl font-semibold hover:bg-muted/80 transition"
               >
                 Voltar ao Menu
               </button>
