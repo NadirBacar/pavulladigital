@@ -1,16 +1,29 @@
 "use client";
 
 // src/pages/Home.tsx
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { Calendar, Clock, QrCode, Trophy, Zap, Gift, ChevronRight, Users, UserPlus, CheckCircle2, CalendarPlus, File } from "lucide-react"
-import BackgroundWithLogo from "@/components/BackgroundWithLogo"
-import Header from "@/components/Header"
-import Footer from "@/components/Footer"
-import QRScannerModal from "@/components/QRScannerModal"
-import { useAuth } from "@/contexts/AuthContext"
-import { fetchActivities, ApiActivity, scanQRCode } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Calendar,
+  Clock,
+  QrCode,
+  Trophy,
+  Zap,
+  Gift,
+  ChevronRight,
+  Users,
+  UserPlus,
+  CheckCircle2,
+  CalendarPlus,
+  File,
+} from "lucide-react";
+import BackgroundWithLogo from "@/components/BackgroundWithLogo";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import QRScannerModal from "@/components/QRScannerModal";
+import { useAuth } from "@/contexts/AuthContext";
+import { fetchActivities, ApiActivity, scanQRCode } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -160,8 +173,12 @@ const Home = () => {
                 <Trophy className="w-12 h-12 text-white" />
                 <Zap className="w-8 h-8 text-white animate-pulse" />
               </div>
-              <h3 className="text-2xl font-black text-white mb-2">Quiz PAVULLA</h3>
-              <p className="text-white text-sm mb-3 font-medium">Teste seus conhecimentos</p>
+              <h3 className="text-2xl font-black text-white mb-2">
+                Quiz PAVULLA
+              </h3>
+              <p className="text-white text-sm mb-3 font-medium">
+                Teste seus conhecimentos
+              </p>
               {/* <div className="flex items-center gap-2 text-white text-sm">
                 <Gift className="w-5 h-5" />
                 <span className="font-semibold">Boné, Agenda e muito mais!</span>
@@ -186,6 +203,22 @@ const Home = () => {
               </div>
             </div>
             <ChevronRight className="w-6 h-6 text-gray-400" />
+          </button>
+
+          <button
+            onClick={() => navigate("/documents")}
+            className="bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl p-6 shadow-elegant hover:shadow-glow transition-all transform hover:scale-105 flex items-center justify-between group text-white"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
+                <File className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-left">
+                <h3 className="text-lg font-bold">Gestão de Documentos</h3>
+                <p className="text-sm opacity-90">Gerenciar Documentos</p>
+              </div>
+            </div>
+            <ChevronRight className="w-6 h-6 text-white opacity-70" />
           </button>
 
           {isAdmin && (
@@ -236,21 +269,6 @@ const Home = () => {
                   <div className="text-left">
                     <h3 className="text-lg font-bold">Gestão de Usuários</h3>
                     <p className="text-sm opacity-90">Gerenciar grupos</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-6 h-6 text-white opacity-70" />
-              </button>
-              <button
-                onClick={() => navigate("/documents")}
-                className="bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl p-6 shadow-elegant hover:shadow-glow transition-all transform hover:scale-105 flex items-center justify-between group text-white"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
-                    <File className="w-7 h-7 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-lg font-bold">Gestão de Documentos</h3>
-                    <p className="text-sm opacity-90">Gerenciar Documentos</p>
                   </div>
                 </div>
                 <ChevronRight className="w-6 h-6 text-white opacity-70" />
