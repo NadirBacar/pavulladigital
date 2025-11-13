@@ -1,15 +1,12 @@
-"use client"
-import { AlertCircle, Loader2, QrCode, X } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
-import jsQR from "jsqr"
+"use client";
+import { AlertCircle, Loader2, QrCode, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import jsQR from "jsqr";
+import { API_BASE_URL, QRCODE_BASE_URL, QRCODE_CLIENTAPP_ID } from "@/lib/api";
 
 interface QRScannerModalProps {
   onClose: () => void;
 }
-
-const API_BASE_URL = "https://api.cursoapp.pavulla.com/api";
-const QRCODE_BASE_URL = "https://qrcode.pavulla.com/v1";
-const QRCODE_CLIENTAPP_ID = "5ccc98c1-002c-417d-9df6-8977a997dcbd";
 
 // Get auth token from localStorage
 const getAuthToken = () => {
@@ -98,7 +95,7 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    let stream: MediaStream | null = null
+    let stream: MediaStream | null = null;
 
     const startCamera = async () => {
       try {
@@ -111,23 +108,23 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
         });
 
         if (videoRef.current) {
-          videoRef.current.srcObject = stream
+          videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => {
             videoRef.current?.play();
             startScanning();
           };
         }
       } catch (error) {
-        console.error("Error accessing camera:", error)
-        setHasCamera(false)
+        console.error("Error accessing camera:", error);
+        setHasCamera(false);
       }
-    }
+    };
 
     const startScanning = () => {
       scanIntervalRef.current = setInterval(() => {
-        scanQRCode()
-      }, 500) // Scan every 500ms
-    }
+        scanQRCode();
+      }, 500); // Scan every 500ms
+    };
 
     const scanQRCode = async () => {
       if (!videoRef.current || !canvasRef.current) return;
@@ -167,7 +164,7 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
         setIsScanning(true);
 
         if (scanIntervalRef.current) {
-          clearInterval(scanIntervalRef.current)
+          clearInterval(scanIntervalRef.current);
         }
 
         if (stream) {
@@ -192,30 +189,28 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
       // IMPORTANT: Install jsQR first: npm install jsqr
       // Then uncomment the code below and add this import at the top:
       // import jsQR from "jsqr"
-      
-      
+
       const code = jsQR(imageData.data, imageData.width, imageData.height, {
         inversionAttempts: "dontInvert",
-      })
-      return code?.data || null
-      
-      
-      // Remove this line after implementing jsQR:
-      return null
-    }
+      });
+      return code?.data || null;
 
-    startCamera()
+      // Remove this line after implementing jsQR:
+      return null;
+    };
+
+    startCamera();
 
     return () => {
       if (scanIntervalRef.current) {
-        clearInterval(scanIntervalRef.current)
+        clearInterval(scanIntervalRef.current);
       }
       if (stream) {
-        stream.getTracks().forEach((track) => track.stop())
+        stream.getTracks().forEach((track) => track.stop());
       }
       if (videoRef.current && videoRef.current.srcObject) {
-        const videoStream = videoRef.current.srcObject as MediaStream
-        videoStream.getTracks().forEach((track) => track.stop())
+        const videoStream = videoRef.current.srcObject as MediaStream;
+        videoStream.getTracks().forEach((track) => track.stop());
       }
     };
   }, []);
@@ -225,17 +220,20 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
       <div className="bg-white rounded-3xl p-6 max-w-md w-full">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-gray-800">Escanear QR Code</h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition">
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition"
+          >
             <X className="w-5 h-5 text-gray-600" />
           </button>
         </div>
-        
+
         {hasCamera ? (
           <div className="relative">
-            <video 
-              ref={videoRef} 
-              autoPlay 
-              playsInline 
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
               muted
               className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto"
               style={{
@@ -293,7 +291,7 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
             ? "QR Code processado com sucesso"
             : "Aponte a câmera para o código QR"}
         </p>
-        
+
         <div className="space-y-3">
           <button
             onClick={onClose}
@@ -304,7 +302,7 @@ const QRScannerModal = ({ onClose }: QRScannerModalProps) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default QRScannerModal
+export default QRScannerModal;

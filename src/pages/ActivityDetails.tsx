@@ -23,6 +23,7 @@ import {
   createMemory,
   ApiActivity,
   ApiMemory,
+  API_BASE_URL,
 } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { compressFile } from "@/lib/fileCompression";
@@ -107,8 +108,7 @@ const ActivityDetails = () => {
       const token = localStorage.getItem("auth_token");
       if (!token) return;
 
-      const API_BASE_URL =
-        import.meta.env.VITE_API_URL || "https://api.cursoapp.pavulla.com/api";
+      
       const baseHost = API_BASE_URL.replace(/\/api$/, "");
       const newBlobUrls = new Map<string, string>();
 
@@ -302,8 +302,7 @@ const ActivityDetails = () => {
       setSubmittingComment(memoryId);
 
       const token = localStorage.getItem("auth_token");
-      const API_BASE_URL =
-        import.meta.env.VITE_API_URL || "https://api.cursoapp.pavulla.com/api";
+    
 
       const response = await fetch(
         `${API_BASE_URL}/memories/${memoryId}/comment`,

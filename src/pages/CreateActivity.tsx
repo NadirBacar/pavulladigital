@@ -13,11 +13,8 @@ import {
 import BackgroundWithLogo from "@/components/BackgroundWithLogo";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
-import { createActivity } from "@/lib/api";
+import { createActivity, QRCODE_BASE_URL } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-
-const QRCODE_BASE_URL = "https://qrcode.pavulla.com/v1";
-const QRCODE_CLIENTAPP_ID = "5ccc98c1-002c-417d-9df6-8977a997dcbd";
 
 const CreateActivity = () => {
   const navigate = useNavigate();

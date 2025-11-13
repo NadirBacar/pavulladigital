@@ -1,13 +1,13 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "https://api.cursoapp.pavulla.com/api";
+export const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
-const QRCODE_BASE_URL =
+export const QRCODE_BASE_URL =
   import.meta.env.QRCODE_BASE_URL || "https://qrcode.pavulla.com/v1";
 
-const QRCODE_CLIENTAPP_ID =
+export const QRCODE_CLIENTAPP_ID =
   import.meta.env.QRCODE_CLIENTAPP_ID || "5ccc98c1-002c-417d-9df6-8977a997dcbd";
 
-const QRCODE_TEMPLATE_ID =
+export const QRCODE_TEMPLATE_ID =
   import.meta.env.QRCODE_TEMPLATE_ID || "b55eaf0f-1186-4072-b6db-cdaa90e6ee6a";
 
 // Get auth token from localStorage
@@ -30,6 +30,24 @@ const getHeaders = (includeAuth = true) => {
 
   return headers;
 };
+
+export interface ApiDocument {
+  id: string;
+  title: string;
+  correspondent: string;
+  document_type: string;
+  tags: string;
+  created: string;
+  modified: string;
+  original_file_name: string;
+}
+
+export interface ApiDocumentStats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+}
 
 export interface ApiComment {
   id: string;
@@ -209,18 +227,18 @@ export const createActivity = async (
     const error = await response.json();
     throw new Error(error.error || "Failed to create activity");
   }
-  
-      const extractQrUuid = (code: string) => {
-        if (!code) return null;
-        try {
-          const url = new URL(code);
-          const parts = url.pathname.split("/").filter(Boolean);
-          const candidate = parts[2] ?? null;
-          return candidate;
-        } catch (e) {
-          return null;
-        }
-      };
+
+  const extractQrUuid = (code: string) => {
+    if (!code) return null;
+    try {
+      const url = new URL(code);
+      const parts = url.pathname.split("/").filter(Boolean);
+      const candidate = parts[2] ?? null;
+      return candidate;
+    } catch (e) {
+      return null;
+    }
+  };
   let code_id: string;
 
   const activity: ApiActivity = await response.json();
@@ -250,7 +268,7 @@ export const createActivity = async (
       const qrData = await qrResponse.json();
       // Convert scan URL to preview URL
       const previewUrl = qrData.ScanUrl.replace("/scan", "/preview");
-      code_id = extractQrUuid(previewUrl)
+      code_id = extractQrUuid(previewUrl);
     } else {
       console.error("Failed to create QR code:", await qrResponse.text());
     }
@@ -413,4 +431,180 @@ export const updateUser = async (
   }
 
   return response.json();
+};
+// Documents
+/**
+ * Upload a new document
+ */
+export const uploadDocument = async (
+  file: File,
+  fullName: string,
+  phoneNumber: string,
+  assignedGroup: string = "admin"
+): Promise<ApiDocument> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("full_name", fullName);
+  formData.append("phone_number", phoneNumber);
+  formData.append("assigned_group", assignedGroup);
+
+  const token = getAuthToken();
+
+  const response = await fetch(`${API_BASE_URL}/documents`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      // Don't set Content-Type - browser will set it with boundary for multipart
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to upload document");
+  }
+
+  return response.json();
+};
+
+/**
+ * Get all documents for the current user
+ */
+export const getMyDocuments = async (): Promise<ApiDocument[]> => {
+  const response = await fetch(`${API_BASE_URL}/documents/me`, {
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    console.log("The error was: ", await response.text());
+    throw new Error("Failed to fetch documents");
+  }
+
+  const data = await response.json();
+  return data.documents || [];
+};
+
+/**
+ * Get document statistics for the current user
+ */
+export const getMyDocumentStats = async (): Promise<ApiDocumentStats> => {
+  const response = await fetch(`${API_BASE_URL}/documents/me/stats`, {
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch document statistics");
+  }
+
+  return response.json();
+};
+
+/**
+ * Get a specific document by ID
+ */
+export const getDocument = async (documentId: string): Promise<ApiDocument> => {
+  const response = await fetch(`${API_BASE_URL}/documents/${documentId}`, {
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to fetch document");
+  }
+
+  return response.json();
+};
+
+/**
+ * Get all documents for a specific group (admin/reviewer only)
+ */
+export const getDocumentsByGroup = async (
+  group: string
+): Promise<ApiDocument[]> => {
+  const response = await fetch(`${API_BASE_URL}/documents/group/${group}`, {
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch documents for group");
+  }
+
+  const data = await response.json();
+  return data.documents || [];
+};
+
+/**
+ * Approve a document (reviewer only)
+ */
+export const approveDocument = async (
+  documentId: string,
+  reviewerName: string
+): Promise<ApiDocument> => {
+  const response = await fetch(
+    `${API_BASE_URL}/documents/${documentId}/approve`,
+    {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ reviewer_name: reviewerName }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to approve document");
+  }
+
+  return response.json();
+};
+
+/**
+ * Reject a document (reviewer only)
+ */
+export const rejectDocument = async (
+  documentId: string,
+  reviewerName: string,
+  reason: string
+): Promise<ApiDocument> => {
+  const response = await fetch(
+    `${API_BASE_URL}/documents/${documentId}/reject`,
+    {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        reviewer_name: reviewerName,
+        reason: reason,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to reject document");
+  }
+
+  return response.json();
+};
+
+/**
+ * Delete a document (owner only)
+ */
+export const deleteDocument = async (documentId: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/documents/${documentId}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to delete document");
+  }
+};
+
+/**
+ * Get the full URL for a document file
+ */
+export const getDocumentFileUrl = (filePath: string): string => {
+  // filePath is the relative path from the backend (e.g., "uploads/user_id/filename")
+  // We need to construct the full URL
+  return `${API_BASE_URL}/files/${filePath}`;
 };
