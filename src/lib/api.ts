@@ -1,5 +1,5 @@
 export const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "https://gorganize.pavulla.com/api";
+  import.meta.env.VITE_API_URL || "https://api.cursoapp.pavulla.com/api";
 
 export const QRCODE_BASE_URL =
   import.meta.env.QRCODE_BASE_URL || "https://qrcode.pavulla.com/v1";
